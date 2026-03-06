@@ -11,7 +11,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="desktop-icon" @dblclick="emit('open', id)">
+  <div class="desktop-icon" @dblclick="() => emit('open', id)">
     <div class="icon-image">{{ icon }}</div>
     <span class="icon-label">{{ label }}</span>
   </div>
