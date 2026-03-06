@@ -38,7 +38,7 @@ function handleIconDoubleClick(id: string) {
 			<p v-if="id === 'certifications'">This is the content of the Certifications window.</p>
 			<p v-if="id === 'recycle-bin'">The Recycle Bin is empty.</p>
 		</Window>
-        
+
 		<Taskbar />
 	</div>
 </template>
@@ -48,7 +48,7 @@ function handleIconDoubleClick(id: string) {
 	width: 100vw;
 	height: 100vh;
 	background: linear-gradient(to bottom, #87ceeb 0%, #b0e0f5 60%, #4a8f3f 60%, #3a7a2f 100%);
-	overflow: hidden;
+	overflow: visible;
 	position: relative;
 }
 
