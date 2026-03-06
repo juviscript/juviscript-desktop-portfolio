@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WindowControlButton from "./WindowControlButton.vue";
 import { ref } from "vue";
 
 const x = ref(100);
@@ -8,9 +9,14 @@ const y = ref(100);
 let offsetX = 0;
 let offsetY = 0;
 
-defineProps<{
-	id: string;
+const props = defineProps<{
+    id: string;
+    defaultWidth: number;
+    defaultHeight: number;
 }>();
+
+const currentWidth = ref(props.defaultWidth);
+const currentHeight = ref(props.defaultHeight);
 
 function grabWindow(event: MouseEvent) {
 	// How far from the window's top-left corner did the user click?
@@ -32,16 +38,31 @@ function stopDragging() {
 	document.removeEventListener("mousemove", dragWindow);
 	document.removeEventListener("mouseup", stopDragging);
 }
+
+function minimizeWindow() {
+    console.log(`Minimize window:`);
+    // Implement minimize functionality here
+}
+
+function maximizeWindow() {
+    console.log(`Maximize window:`);
+    // Implement maximize functionality here
+}
+
+function closeWindow() {
+    console.log(`Close window:`);
+    // Implement close functionality here
+}
 </script>
 
 <template>
-	<div class="window" :style="{ left: `${x}px`, top: `${y}px` }">
+	<div class="window" :style="{ left: `${x}px`, top: `${y}px`, width: `${currentWidth}px`, height: `${currentHeight}px` }">
 		<div class="title-bar" @mousedown="grabWindow">
 			<span class="title">Window Title</span>
 			<div class="window-controls">
-				<button class="control-btn minimize">_</button>
-				<button class="control-btn maximize">[ ]</button>
-				<button class="control-btn close">X</button>
+				<WindowControlButton id="minimize" icon="-" @windowAction="minimizeWindow" />
+				<WindowControlButton id="maximize" icon="[]" @windowAction="maximizeWindow" />
+				<WindowControlButton id="close" icon="X" @windowAction="closeWindow" />
 			</div>
 		</div>
 		<div class="content">

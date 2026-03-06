@@ -4,39 +4,39 @@ import Taskbar from "./Taskbar.vue";
 import Window from "./Window.vue";
 import { ref } from "vue";
 
-const icons = [
-	{ id: "projects", label: "My Projects", icon: "📁" },
-	{ id: "about", label: "About Me", icon: "📄" },
-	{ id: "resume", label: "Resume", icon: "📋" },
-	{ id: "contact", label: "Contact", icon: "✉️" },
-	{ id: "certifications", label: "Certs", icon: "🏆" },
-	{ id: "recycle-bin", label: "Recycle Bin", icon: "🗑️" },
+const desktopApps = [
+	{ id: "projects", iconLabel: "My Projects", icon: "📁", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "about", iconLabel: "About Me", icon: "📄", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "resume", iconLabel: "Resume", icon: "📋", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "contact", iconLabel: "Contact", icon: "✉️", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "certifications", iconLabel: "Certs", icon: "🏆", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "recycle-bin", iconLabel: "Recycle Bin", icon: "🗑️", defaultWidth: 400, defaultHeight: 300 },
 ];
 
-const openWindows = ref<string[]>([]);
+const openWindows = ref<typeof desktopApps>([]);
 
-function handleIconDoubleClick(id: string) {
-	console.log(`Opened: ${id}`);
-	// Open the window if it's not already open
-	if (!openWindows.value.includes(id)) {
-		openWindows.value.push(id);
-	}
+function openApp(id: string) {
+  const app = desktopApps.find(a => a.id === id);
+  if (app && !openWindows.value.find(w => w.id === id)) {
+    openWindows.value.push(app);
+  }
 }
+
 </script>
 
 <template>
 	<div class="desktop">
 		<div class="icon-grid">
-			<DesktopIcon v-for="icon in icons" :key="icon.id" :id="icon.id" :label="icon.label" :icon="icon.icon" @open="handleIconDoubleClick" />
+			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :iconLabel="app.iconLabel" @open="openApp" />
 		</div>
 
-		<Window v-for="id in openWindows" :key="id" :id="id">
-			<p v-if="id === 'resume'">This is the content of the Resume window.</p>
-			<p v-if="id === 'projects'">This is the content of the Projects window.</p>
-			<p v-if="id === 'about'">This is the content of the About window.</p>
-			<p v-if="id === 'contact'">This is the content of the Contact window.</p>
-			<p v-if="id === 'certifications'">This is the content of the Certifications window.</p>
-			<p v-if="id === 'recycle-bin'">The Recycle Bin is empty.</p>
+		<Window v-for="app in openWindows" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight">
+			<p v-if="app.id === 'resume'">This is the content of the Resume window.</p>
+			<p v-if="app.id === 'projects'">This is the content of the Projects window.</p>
+			<p v-if="app.id === 'about'">This is the content of the About window.</p>
+			<p v-if="app.id === 'contact'">This is the content of the Contact window.</p>
+			<p v-if="app.id === 'certifications'">This is the content of the Certifications window.</p>
+			<p v-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
 		</Window>
 
 		<Taskbar />
