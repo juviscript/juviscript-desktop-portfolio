@@ -72,6 +72,23 @@ function restoreApp(id: string) {
 		openWindow.isMinimized = false;
 	}
 }
+
+function bringToFront(id: string) {
+  const index = openWindows.value.findIndex(window => window.id === id);
+
+  if (index === -1) {
+    return;
+  }
+
+  const [windowToMove] = openWindows.value.splice(index, 1);
+
+  if (!windowToMove) {
+    return;
+  }
+
+  openWindows.value.push(windowToMove);
+}
+
 </script>
 
 <template>
@@ -80,7 +97,7 @@ function restoreApp(id: string) {
 			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :label="app.label" :icon="app.icon" @open="openApp" />
 		</div>
 
-		<Window v-for="app in openWindows" v-show="!app.isMinimized" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight" :title="app.label" @close="closeApp" @minimize="minimizeApp">
+		<Window v-for="app in openWindows" v-show="!app.isMinimized" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight" :title="app.label" @close="closeApp" @minimize="minimizeApp" @focus="bringToFront">
 			<p v-if="app.id === 'resume'">This is the content of the Resume window.</p>
 			<p v-if="app.id === 'projects'">This is the content of the Projects window.</p>
 			<p v-if="app.id === 'about'">This is the content of the About window.</p>
