@@ -3,6 +3,7 @@ import { ref } from "vue";
 import DesktopIcon from "./DesktopIcon.vue";
 import Taskbar from "./Taskbar.vue";
 import Window from "./Window.vue";
+import ResumeWindow from "./ResumeWindow.vue";
 
 type DesktopApp = {
 	id: string;
@@ -20,7 +21,7 @@ type OpenWindow = DesktopApp & {
 const desktopApps: DesktopApp[] = [
 	{ id: "projects", label: "My Projects", icon: "📁", defaultWidth: 400, defaultHeight: 300 },
 	{ id: "about", label: "About Me", icon: "📄", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "resume", label: "Resume", icon: "📋", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "resume", label: "Resume", icon: "📋", defaultWidth: 600, defaultHeight: 950 },
 	{ id: "contact", label: "Contact", icon: "✉️", defaultWidth: 400, defaultHeight: 300 },
 	{ id: "certifications", label: "Certs", icon: "🏆", defaultWidth: 400, defaultHeight: 300 },
 	{ id: "recycle-bin", label: "Recycle Bin", icon: "🗑️", defaultWidth: 400, defaultHeight: 300 },
@@ -131,7 +132,7 @@ function focusApp(id: string) {
 			@minimize="minimizeApp"
 			@focus="focusApp"
 		>
-			<p v-if="app.id === 'resume'">This is the content of the Resume window.</p>
+			<ResumeWindow v-if="app.id === 'resume'" />
 			<p v-if="app.id === 'projects'">This is the content of the Projects window.</p>
 			<p v-if="app.id === 'about'">This is the content of the About window.</p>
 			<p v-if="app.id === 'contact'">This is the content of the Contact window.</p>
