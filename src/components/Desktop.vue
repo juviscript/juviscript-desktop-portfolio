@@ -51,10 +51,10 @@ function closeApp(id: string) {
 
 <style scoped>
 .desktop {
-	width: 100vw;
-	height: 100vh;
+	width: 100%;
+	height: 100%;
 	background: linear-gradient(to bottom, #87ceeb 0%, #b0e0f5 60%, #4a8f3f 60%, #3a7a2f 100%);
-	overflow: visible;
+	overflow: hidden;
 	position: relative;
 }
 

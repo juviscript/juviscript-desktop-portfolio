@@ -10,18 +10,28 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	minimize: [id: string];
-	maximize: [id: string];
 	close: [id: string];
 }>();
 
 const x = ref(100);
 const y = ref(100);
+
 let offsetX = 0;
 let offsetY = 0;
 
 const currentWidth = ref(props.defaultWidth);
 const currentHeight = ref(props.defaultHeight);
+
+let isMaximized = ref(false);
+
+type WindowBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+const savedBounds = ref<WindowBounds | null>(null);
 
 function grabWindow(event: MouseEvent) {
 	// How far from the window's top-left corner did the user click?
@@ -46,17 +56,39 @@ function stopDragging() {
 
 function handleWindowAction(action: string) {
 	if (action === "minimize") {
-        emit('minimize', props.id);
+        console.log(`Minimizing window with id: ${props.id}`);
 	} else if (action === "maximize") {
-        emit('maximize', props.id);
+        console.log(`Toggling maximize for window with id: ${props.id}`);
+
+        if (isMaximized.value == false) {
+            // Save current bounds before maximizing
+            savedBounds.value = { x: x.value, y: y.value, width: currentWidth.value, height: currentHeight.value };
+           
+            x.value = 0;
+            y.value = 0;
+            currentWidth.value = window.innerWidth;
+            currentHeight.value = window.innerHeight;
+
+            isMaximized.value = true;
+        } else if (isMaximized.value == true && savedBounds.value) {
+            // Restore to saved bounds
+            x.value = savedBounds.value.x;
+            y.value = savedBounds.value.y;
+            currentWidth.value = savedBounds.value.width;
+            currentHeight.value = savedBounds.value.height;
+
+            isMaximized.value = false;
+        }
+
 	} else if (action === "close") {
+        console.log(`Closing window with id: ${props.id}`);
         emit('close', props.id);
 	}
 }
 </script>
 
 <template>
-	<div class="window" :style="{ left: `${x}px`, top: `${y}px`, width: `${currentWidth}px`, height: `${currentHeight}px` }">
+	<div class="window" :class="{ 'maximized': isMaximized }" :style="isMaximized ? {} : { left: `${x}px`, top: `${y}px`, width: `${currentWidth}px`, height: `${currentHeight}px`} ">
 		<div class="title-bar" @mousedown="grabWindow">
 			<span class="title">Window Title</span>
 			<div class="window-controls">
@@ -74,10 +106,16 @@ function handleWindowAction(action: string) {
 <style scoped>
 .window {
 	position: absolute;
-	width: 400px;
-	height: 300px;
 	background-color: white;
 }
+
+.window.maximized {
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 36px;
+}
+
 
 .title-bar {
 	display: flex;
