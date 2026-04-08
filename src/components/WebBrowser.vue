@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
+const props = defineProps<{
+	url: string;
+    isPdf: boolean;
+    objectUrl?: string;
+}>();
+
 </script>
 
+
 <template>
-	<div class="browser-window">
+<div class="browser-window">
 		<div class="browser-navigation-bar">
 			<div class="browser-navigation buttons">
 				<button class="browser-back-button"><-</button>
@@ -12,17 +18,17 @@ import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
 				<button class="browser-home-button">🏠</button>
 			</div>
 			<div class="browser-navigation-address-bar">
-				<input type="text" class="browser-url-input" value="https://www.juviscript.dev/resume" disabled />
+				<input type="text" class="browser-url-input" :value="props.url" disabled />
 			</div>
 			<div class="browser-navigation-menu">
 				<button class="browser-menu-button">☰</button>
 			</div>
 		</div>
-		<div class="resume-window">
-			<object :data="resumePdf" type="application/pdf" style="width: 100%; height: 100%">
+		<div class="browser-content">
+			<object :data="props.objectUrl || props.url" :type="props.isPdf ? 'application/pdf' : undefined" style="width: 100%; height: 100%">
 				<p>
-					PDF preview not available.
-					<a :href="resumePdf" target="_blank" rel="noopener">Open resume</a>
+					Content not available.
+					<a :href="props.objectUrl || props.url" target="_blank" rel="noopener">Open content</a>
 				</p>
 			</object>
 		</div>
@@ -62,7 +68,7 @@ import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
 	}
 }
 
-.resume-window {
+.browser-content {
 	flex-grow: 1;
 	overflow: hidden;
 }
