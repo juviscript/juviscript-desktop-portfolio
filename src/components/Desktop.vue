@@ -5,32 +5,38 @@ import Window from "./Window.vue";
 import { ref } from "vue";
 
 const desktopApps = [
-	{ id: "projects", iconLabel: "My Projects", icon: "📁", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "about", iconLabel: "About Me", icon: "📄", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "resume", iconLabel: "Resume", icon: "📋", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "contact", iconLabel: "Contact", icon: "✉️", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "certifications", iconLabel: "Certs", icon: "🏆", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "recycle-bin", iconLabel: "Recycle Bin", icon: "🗑️", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "projects", label: "My Projects", icon: "📁", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "about", label: "About Me", icon: "📄", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "resume", label: "Resume", icon: "📋", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "contact", label: "Contact", icon: "✉️", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "certifications", label: "Certs", icon: "🏆", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "recycle-bin", label: "Recycle Bin", icon: "🗑️", defaultWidth: 400, defaultHeight: 300 },
 ];
 
 const openWindows = ref<typeof desktopApps>([]);
 
 function openApp(id: string) {
-  const app = desktopApps.find(a => a.id === id);
-  if (app && !openWindows.value.find(w => w.id === id)) {
-    openWindows.value.push(app);
-  }
+	console.log(`Opening app with id: ${id}`);
+	const app = desktopApps.find(app => app.id === id);
+
+	if (app && !openWindows.value.find(openWindow => openWindow.id === id)) {
+		openWindows.value.push(app);
+	}
 }
 
+function closeApp(id: string) {
+	console.log(`Closing app with id: ${id}`);
+	openWindows.value = openWindows.value.filter(openWindow => openWindow.id !== id);
+}
 </script>
 
 <template>
 	<div class="desktop">
 		<div class="icon-grid">
-			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :iconLabel="app.iconLabel" @open="openApp" />
+			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :label="app.label" :icon="app.icon" @open="openApp" />
 		</div>
 
-		<Window v-for="app in openWindows" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight">
+		<Window v-for="app in openWindows" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight" :title="app.label" @close="closeApp">
 			<p v-if="app.id === 'resume'">This is the content of the Resume window.</p>
 			<p v-if="app.id === 'projects'">This is the content of the Projects window.</p>
 			<p v-if="app.id === 'about'">This is the content of the About window.</p>

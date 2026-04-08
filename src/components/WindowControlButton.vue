@@ -1,18 +1,18 @@
 <script setup lang="ts">
 
 defineProps<{
-    id: string;
+    action: string;
     icon: string
 }>();
 
 const emit = defineEmits<{
-  windowAction: [id: string]
+  windowAction: [action: string]
 }>();
 
 </script>
 
 <template>
-	<div class="button" @click="() => emit('windowAction', id)">
+	<div class="button" @click="() => emit('windowAction', action)">
 		{{ icon }}
 	</div>
 </template>

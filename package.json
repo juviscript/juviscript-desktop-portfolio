@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "issues:seed": "node .\\scripts\\seed-github-issues.mjs",
+    "issues:seed:dry": "node .\\scripts\\seed-github-issues.mjs --dry-run"
   },
   "dependencies": {
     "vue": "^3.5.25"

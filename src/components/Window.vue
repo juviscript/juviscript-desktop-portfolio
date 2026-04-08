@@ -2,18 +2,23 @@
 import WindowControlButton from "./WindowControlButton.vue";
 import { ref } from "vue";
 
+const props = defineProps<{
+	id: string;
+	defaultWidth: number;
+	defaultHeight: number;
+	title: string;
+}>();
+
+const emit = defineEmits<{
+	minimize: [id: string];
+	maximize: [id: string];
+	close: [id: string];
+}>();
+
 const x = ref(100);
 const y = ref(100);
-
-// Tracks where inside the title bar the user clicked
 let offsetX = 0;
 let offsetY = 0;
-
-const props = defineProps<{
-    id: string;
-    defaultWidth: number;
-    defaultHeight: number;
-}>();
 
 const currentWidth = ref(props.defaultWidth);
 const currentHeight = ref(props.defaultHeight);
@@ -39,19 +44,14 @@ function stopDragging() {
 	document.removeEventListener("mouseup", stopDragging);
 }
 
-function minimizeWindow() {
-    console.log(`Minimize window:`);
-    // Implement minimize functionality here
-}
-
-function maximizeWindow() {
-    console.log(`Maximize window:`);
-    // Implement maximize functionality here
-}
-
-function closeWindow() {
-    console.log(`Close window:`);
-    // Implement close functionality here
+function handleWindowAction(action: string) {
+	if (action === "minimize") {
+        emit('minimize', props.id);
+	} else if (action === "maximize") {
+        emit('maximize', props.id);
+	} else if (action === "close") {
+        emit('close', props.id);
+	}
 }
 </script>
 
@@ -60,9 +60,9 @@ function closeWindow() {
 		<div class="title-bar" @mousedown="grabWindow">
 			<span class="title">Window Title</span>
 			<div class="window-controls">
-				<WindowControlButton id="minimize" icon="-" @windowAction="minimizeWindow" />
-				<WindowControlButton id="maximize" icon="[]" @windowAction="maximizeWindow" />
-				<WindowControlButton id="close" icon="X" @windowAction="closeWindow" />
+				<WindowControlButton action="minimize" icon="-" @windowAction="handleWindowAction" />
+				<WindowControlButton action="maximize" icon="[]" @windowAction="handleWindowAction" />
+				<WindowControlButton action="close" icon="X" @windowAction="handleWindowAction" />
 			</div>
 		</div>
 		<div class="content">
