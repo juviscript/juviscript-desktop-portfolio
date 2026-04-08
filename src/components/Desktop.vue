@@ -14,6 +14,7 @@ type DesktopApp = {
 
 type OpenWindow = DesktopApp & {
 	isMinimized: boolean;
+	zIndex: number;
 };
 
 const desktopApps: DesktopApp[] = [
@@ -26,28 +27,42 @@ const desktopApps: DesktopApp[] = [
 ];
 
 const openWindows = ref<OpenWindow[]>([]);
+let nextZIndex = 1;
 
 function openApp(id: string) {
 	import.meta.env.DEV && console.log(`Checking if app is already open with id: ${id}`);
 	const existingWindow = openWindows.value.find(openWindow => openWindow.id === id);
 
 	if (existingWindow) {
-        import.meta.env.DEV && console.log("App is already open, restoring if minimized:", id);
+		import.meta.env.DEV && console.log("App is already open, restoring if minimized:", id);
 		existingWindow.isMinimized = false;
+		focusApp(id);
 		return;
 	}
 
-    import.meta.env.DEV && console.log("Finding app with id:", id);
+	import.meta.env.DEV && console.log("Finding app with id:", id);
 	const app = desktopApps.find(desktopApp => desktopApp.id === id);
 
 	if (app) {
-        import.meta.env.DEV && console.log("App found, opening window for:", id);
+		import.meta.env.DEV && console.log("App found, opening window for:", id);
 
 		openWindows.value.push({
 			...app,
 			isMinimized: false,
+			zIndex: nextZIndex++,
 		});
 	}
+}
+
+function getTopVisibleWindow() {
+	return openWindows.value
+		.filter(window => !window.isMinimized)
+		.reduce<OpenWindow | undefined>((topWindow, currentWindow) => {
+			if (!topWindow || currentWindow.zIndex > topWindow.zIndex) {
+				return currentWindow;
+			}
+			return topWindow;
+		}, undefined);
 }
 
 function closeApp(id: string) {
@@ -64,31 +79,37 @@ function minimizeApp(id: string) {
 	}
 }
 
-function restoreApp(id: string) {
+function handleTaskbarIconClick(id: string) {
 	const openWindow = openWindows.value.find(window => window.id === id);
 
-	if (openWindow) {
-		import.meta.env.DEV && console.log(`Restoring app with id: ${id}`);
-		openWindow.isMinimized = false;
+	if (!openWindow) {
+		return;
 	}
+
+	const topWindow = getTopVisibleWindow();
+
+	if (openWindow.isMinimized) {
+		openWindow.isMinimized = false;
+		focusApp(id);
+		return;
+	}
+
+	if (topWindow?.id === id) {
+		openWindow.isMinimized = true;
+		return;
+	}
+
+	focusApp(id);
 }
 
-function bringToFront(id: string) {
-  const index = openWindows.value.findIndex(window => window.id === id);
+function focusApp(id: string) {
+	const openWindow = openWindows.value.find(window => window.id === id);
+	if (!openWindow) {
+		return;
+	}
 
-  if (index === -1) {
-    return;
-  }
-
-  const [windowToMove] = openWindows.value.splice(index, 1);
-
-  if (!windowToMove) {
-    return;
-  }
-
-  openWindows.value.push(windowToMove);
+	openWindow.zIndex = nextZIndex++;
 }
-
 </script>
 
 <template>
@@ -97,7 +118,19 @@ function bringToFront(id: string) {
 			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :label="app.label" :icon="app.icon" @open="openApp" />
 		</div>
 
-		<Window v-for="app in openWindows" v-show="!app.isMinimized" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight" :title="app.label" @close="closeApp" @minimize="minimizeApp" @focus="bringToFront">
+		<Window
+			v-for="app in openWindows"
+			v-show="!app.isMinimized"
+			:key="app.id"
+			:id="app.id"
+			:defaultWidth="app.defaultWidth"
+			:defaultHeight="app.defaultHeight"
+			:title="app.label"
+			:z-index="app.zIndex"
+			@close="closeApp"
+			@minimize="minimizeApp"
+			@focus="focusApp"
+		>
 			<p v-if="app.id === 'resume'">This is the content of the Resume window.</p>
 			<p v-if="app.id === 'projects'">This is the content of the Projects window.</p>
 			<p v-if="app.id === 'about'">This is the content of the About window.</p>
@@ -106,7 +139,7 @@ function bringToFront(id: string) {
 			<p v-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
 		</Window>
 
-		<Taskbar :windows="openWindows" @select-window="restoreApp" />
+		<Taskbar :windows="openWindows" @select-window="handleTaskbarIconClick" />
 	</div>
 </template>
 

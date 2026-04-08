@@ -7,7 +7,7 @@ const props = defineProps<{
 	defaultWidth: number;
 	defaultHeight: number;
 	title: string;
-	zIndex?: number;
+	zIndex: number;
 }>();
 
 const emit = defineEmits<{
@@ -43,6 +43,8 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function grabWindow(event: MouseEvent) {
+	emit("focus", props.id);
+
 	if (isMaximized.value) {
 		return;
 	}
@@ -55,8 +57,6 @@ function grabWindow(event: MouseEvent) {
 }
 
 function dragWindow(event: MouseEvent) {
-    emit("focus", props.id);
-    
 	const nextX = event.clientX - offsetX;
 	const nextY = event.clientY - offsetY;
 	const visibleTitleWidth = Math.min(currentWidth.value, MIN_VISIBLE_TITLE_WIDTH);
