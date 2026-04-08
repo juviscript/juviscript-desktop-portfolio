@@ -1,10 +1,22 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import DesktopIcon from "./DesktopIcon.vue";
 import Taskbar from "./Taskbar.vue";
 import Window from "./Window.vue";
-import { ref } from "vue";
 
-const desktopApps = [
+type DesktopApp = {
+	id: string;
+	label: string;
+	icon: string;
+	defaultWidth: number;
+	defaultHeight: number;
+};
+
+type OpenWindow = DesktopApp & {
+	isMinimized: boolean;
+};
+
+const desktopApps: DesktopApp[] = [
 	{ id: "projects", label: "My Projects", icon: "📁", defaultWidth: 400, defaultHeight: 300 },
 	{ id: "about", label: "About Me", icon: "📄", defaultWidth: 400, defaultHeight: 300 },
 	{ id: "resume", label: "Resume", icon: "📋", defaultWidth: 400, defaultHeight: 300 },
@@ -13,20 +25,52 @@ const desktopApps = [
 	{ id: "recycle-bin", label: "Recycle Bin", icon: "🗑️", defaultWidth: 400, defaultHeight: 300 },
 ];
 
-const openWindows = ref<typeof desktopApps>([]);
+const openWindows = ref<OpenWindow[]>([]);
 
 function openApp(id: string) {
-	console.log(`Opening app with id: ${id}`);
-	const app = desktopApps.find(app => app.id === id);
+	import.meta.env.DEV && console.log(`Checking if app is already open with id: ${id}`);
+	const existingWindow = openWindows.value.find(openWindow => openWindow.id === id);
 
-	if (app && !openWindows.value.find(openWindow => openWindow.id === id)) {
-		openWindows.value.push(app);
+	if (existingWindow) {
+        import.meta.env.DEV && console.log("App is already open, restoring if minimized:", id);
+		existingWindow.isMinimized = false;
+		return;
+	}
+
+    import.meta.env.DEV && console.log("Finding app with id:", id);
+	const app = desktopApps.find(desktopApp => desktopApp.id === id);
+
+	if (app) {
+        import.meta.env.DEV && console.log("App found, opening window for:", id);
+
+		openWindows.value.push({
+			...app,
+			isMinimized: false,
+		});
 	}
 }
 
 function closeApp(id: string) {
-	console.log(`Closing app with id: ${id}`);
+	import.meta.env.DEV && console.log(`Closing app with id: ${id}`);
 	openWindows.value = openWindows.value.filter(openWindow => openWindow.id !== id);
+}
+
+function minimizeApp(id: string) {
+	const openWindow = openWindows.value.find(window => window.id === id);
+
+	if (openWindow) {
+		import.meta.env.DEV && console.log(`Minimizing app with id: ${id}`);
+		openWindow.isMinimized = true;
+	}
+}
+
+function restoreApp(id: string) {
+	const openWindow = openWindows.value.find(window => window.id === id);
+
+	if (openWindow) {
+		import.meta.env.DEV && console.log(`Restoring app with id: ${id}`);
+		openWindow.isMinimized = false;
+	}
 }
 </script>
 
@@ -36,7 +80,7 @@ function closeApp(id: string) {
 			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :label="app.label" :icon="app.icon" @open="openApp" />
 		</div>
 
-		<Window v-for="app in openWindows" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight" :title="app.label" @close="closeApp">
+		<Window v-for="app in openWindows" v-show="!app.isMinimized" :key="app.id" :id="app.id" :defaultWidth="app.defaultWidth" :defaultHeight="app.defaultHeight" :title="app.label" @close="closeApp" @minimize="minimizeApp">
 			<p v-if="app.id === 'resume'">This is the content of the Resume window.</p>
 			<p v-if="app.id === 'projects'">This is the content of the Projects window.</p>
 			<p v-if="app.id === 'about'">This is the content of the About window.</p>
@@ -45,7 +89,7 @@ function closeApp(id: string) {
 			<p v-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
 		</Window>
 
-		<Taskbar />
+		<Taskbar :windows="openWindows" @select-window="restoreApp" />
 	</div>
 </template>
 

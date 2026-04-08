@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import WindowControlButton from "./WindowControlButton.vue";
 import { ref } from "vue";
+import WindowControlButton from "./WindowControlButton.vue";
 
 const props = defineProps<{
 	id: string;
@@ -10,32 +10,41 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
+	minimize: [id: string];
 	close: [id: string];
 }>();
 
 const x = ref(100);
 const y = ref(100);
+const currentWidth = ref(props.defaultWidth);
+const currentHeight = ref(props.defaultHeight);
+const isMaximized = ref(false);
+
+const TASKBAR_HEIGHT = 36;
+const TITLE_BAR_HEIGHT = 29;
+const MIN_VISIBLE_TITLE_WIDTH = 120;
 
 let offsetX = 0;
 let offsetY = 0;
 
-const currentWidth = ref(props.defaultWidth);
-const currentHeight = ref(props.defaultHeight);
-
-let isMaximized = ref(false);
-
 type WindowBounds = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
 };
 
 const savedBounds = ref<WindowBounds | null>(null);
 
+function clamp(value: number, min: number, max: number) {
+	return Math.min(Math.max(value, min), max);
+}
+
 function grabWindow(event: MouseEvent) {
-	// How far from the window's top-left corner did the user click?
-	// e.g. if window is at x=100 and user clicked at clientX=160, offset is 60
+	if (isMaximized.value) {
+		return;
+	}
+
 	offsetX = event.clientX - x.value;
 	offsetY = event.clientY - y.value;
 
@@ -44,9 +53,17 @@ function grabWindow(event: MouseEvent) {
 }
 
 function dragWindow(event: MouseEvent) {
-	// Subtract the offset so the window doesn't snap its corner to the cursor
-	x.value = event.clientX - offsetX;
-	y.value = event.clientY - offsetY;
+	const nextX = event.clientX - offsetX;
+	const nextY = event.clientY - offsetY;
+	const visibleTitleWidth = Math.min(currentWidth.value, MIN_VISIBLE_TITLE_WIDTH);
+
+	const minX = visibleTitleWidth - currentWidth.value;
+	const maxX = window.innerWidth - visibleTitleWidth;
+	const minY = 0;
+	const maxY = window.innerHeight - TASKBAR_HEIGHT - TITLE_BAR_HEIGHT;
+
+	x.value = clamp(nextX, minX, maxX);
+	y.value = clamp(nextY, minY, maxY);
 }
 
 function stopDragging() {
@@ -56,41 +73,46 @@ function stopDragging() {
 
 function handleWindowAction(action: string) {
 	if (action === "minimize") {
-        console.log(`Minimizing window with id: ${props.id}`);
-	} else if (action === "maximize") {
-        console.log(`Toggling maximize for window with id: ${props.id}`);
+		emit("minimize", props.id);
+		return;
+	}
 
-        if (isMaximized.value == false) {
-            // Save current bounds before maximizing
-            savedBounds.value = { x: x.value, y: y.value, width: currentWidth.value, height: currentHeight.value };
-           
-            x.value = 0;
-            y.value = 0;
-            currentWidth.value = window.innerWidth;
-            currentHeight.value = window.innerHeight;
+	if (action === "maximize") {
+		if (!isMaximized.value) {
+			savedBounds.value = {
+				x: x.value,
+				y: y.value,
+				width: currentWidth.value,
+				height: currentHeight.value,
+			};
+			isMaximized.value = true;
+			return;
+		}
 
-            isMaximized.value = true;
-        } else if (isMaximized.value == true && savedBounds.value) {
-            // Restore to saved bounds
-            x.value = savedBounds.value.x;
-            y.value = savedBounds.value.y;
-            currentWidth.value = savedBounds.value.width;
-            currentHeight.value = savedBounds.value.height;
+		if (savedBounds.value) {
+			x.value = savedBounds.value.x;
+			y.value = savedBounds.value.y;
+			currentWidth.value = savedBounds.value.width;
+			currentHeight.value = savedBounds.value.height;
+		}
+		isMaximized.value = false;
+		return;
+	}
 
-            isMaximized.value = false;
-        }
-
-	} else if (action === "close") {
-        console.log(`Closing window with id: ${props.id}`);
-        emit('close', props.id);
+	if (action === "close") {
+		emit("close", props.id);
 	}
 }
 </script>
 
 <template>
-	<div class="window" :class="{ 'maximized': isMaximized }" :style="isMaximized ? {} : { left: `${x}px`, top: `${y}px`, width: `${currentWidth}px`, height: `${currentHeight}px`} ">
+	<div
+		class="window"
+		:class="{ maximized: isMaximized }"
+		:style="isMaximized ? {} : { left: `${x}px`, top: `${y}px`, width: `${currentWidth}px`, height: `${currentHeight}px` }"
+	>
 		<div class="title-bar" @mousedown="grabWindow">
-			<span class="title">Window Title</span>
+			<span class="title">{{ props.title }}</span>
 			<div class="window-controls">
 				<WindowControlButton action="minimize" icon="-" @windowAction="handleWindowAction" />
 				<WindowControlButton action="maximize" icon="[]" @windowAction="handleWindowAction" />
@@ -107,15 +129,16 @@ function handleWindowAction(action: string) {
 .window {
 	position: absolute;
 	background-color: white;
+	border: 2px solid #c0c0c0;
+	box-shadow: 2px 2px 0 #404040;
 }
 
 .window.maximized {
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 36px;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 36px;
 }
-
 
 .title-bar {
 	display: flex;
@@ -124,11 +147,17 @@ function handleWindowAction(action: string) {
 	background-color: #0078d7;
 	color: white;
 	padding: 4px 8px;
+	user-select: none;
 }
 
-.control-btn {
-	background-color: red;
-	color: white;
-	font-weight: 800;
+.window-controls {
+	display: flex;
+	gap: 4px;
+}
+
+.content {
+	height: calc(100% - 29px);
+	padding: 12px;
+	overflow: auto;
 }
 </style>
