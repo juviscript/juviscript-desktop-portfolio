@@ -7,11 +7,13 @@ const props = defineProps<{
 	defaultWidth: number;
 	defaultHeight: number;
 	title: string;
+	zIndex: number;
 }>();
 
 const emit = defineEmits<{
 	minimize: [id: string];
 	close: [id: string];
+	focus: [id: string];
 }>();
 
 const x = ref(100);
@@ -41,6 +43,8 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function grabWindow(event: MouseEvent) {
+	emit("focus", props.id);
+
 	if (isMaximized.value) {
 		return;
 	}
@@ -109,8 +113,18 @@ function handleWindowAction(action: string) {
 	<div
 		class="window"
 		:class="{ maximized: isMaximized }"
-		:style="isMaximized ? {} : { left: `${x}px`, top: `${y}px`, width: `${currentWidth}px`, height: `${currentHeight}px` }"
-	>
+		:style="{
+			...(isMaximized
+				? {}
+				: {
+						left: `${x}px`,
+						top: `${y}px`,
+						width: `${currentWidth}px`,
+						height: `${currentHeight}px`,
+					}),
+			zIndex: props.zIndex,
+		}"
+		@click="emit('focus', props.id)">
 		<div class="title-bar" @mousedown="grabWindow">
 			<span class="title">{{ props.title }}</span>
 			<div class="window-controls">
