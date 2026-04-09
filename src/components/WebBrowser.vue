@@ -1,15 +1,13 @@
 <script setup lang="ts">
 const props = defineProps<{
 	url: string;
-    isPdf: boolean;
-    objectUrl?: string;
+	isPdf: boolean;
+	objectUrl?: string;
 }>();
-
 </script>
 
-
 <template>
-<div class="browser-window">
+	<div class="browser-window">
 		<div class="browser-navigation-bar">
 			<div class="browser-navigation buttons">
 				<button class="browser-back-button"><-</button>
@@ -25,12 +23,13 @@ const props = defineProps<{
 			</div>
 		</div>
 		<div class="browser-content">
-			<object :data="props.objectUrl || props.url" :type="props.isPdf ? 'application/pdf' : undefined" style="width: 100%; height: 100%">
+			<object v-if="props.isPdf" :data="props.objectUrl || props.url" type="application/pdf" class="browser-frame">
 				<p>
 					Content not available.
 					<a :href="props.objectUrl || props.url" target="_blank" rel="noopener">Open content</a>
 				</p>
 			</object>
+			<iframe v-else :src="props.url" title="Embedded browser content" class="browser-frame" />
 		</div>
 	</div>
 </template>
@@ -49,7 +48,7 @@ const props = defineProps<{
 .browser-navigation-bar {
 	width: 100%;
 	display: flex;
-	align-items: space-between;
+	align-items: center;
 	padding: 8px;
 	background-color: #f0f0f0;
 	border-bottom: 1px solid #ccc;
@@ -71,5 +70,11 @@ const props = defineProps<{
 .browser-content {
 	flex-grow: 1;
 	overflow: hidden;
+}
+
+.browser-frame {
+	width: 100%;
+	height: 100%;
+	border: 0;
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { certifications, type Certification } from "../data/Certifications";
+import { projects, type Project } from "../data/Projects";
 
 const props = defineProps<{
 	id: string;
@@ -8,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	"open-file": [file: { id: string; title: string; filePath: string; displayUrl: string }];
+	"open-project": [projectId: string];
 }>();
 
 function openCertification(certification: Certification) {
@@ -17,6 +19,10 @@ function openCertification(certification: Certification) {
 		filePath: certification.filePath,
 		displayUrl: certification.displayUrl,
 	});
+}
+
+function openProject(project: Project) {
+	emit("open-project", project.id);
 }
 </script>
 
@@ -38,22 +44,20 @@ function openCertification(certification: Certification) {
 
 		<div class="file-explorer-content">
 			<div class="file-explorer-directory">
-                <ul class="file-explorer-directory-list">
-                <li class="file-explorer-directory-item">This PC</li>
-                </ul>
-            </div>
+				<ul class="file-explorer-directory-list">
+					<li class="file-explorer-directory-item">This PC</li>
+				</ul>
+			</div>
 
 			<div class="file-explorer-files">
-				<div
-					v-if="props.id === 'certifications'"
-					v-for="cert in certifications"
-					:key="cert.id"
-					class="file-explorer-file"
-					:class="{ disabled: !cert.filePath }"
-					@dblclick="openCertification(cert)"
-				>
+				<div v-if="props.id === 'certifications'" v-for="cert in certifications" :key="cert.id" class="file-explorer-file" :class="{ disabled: !cert.filePath }" @dblclick="openCertification(cert)">
 					<img class="file-icon" :src="cert.icon" :alt="`${cert.title} icon`" />
 					<div class="file-name">{{ cert.title }}</div>
+				</div>
+
+				<div v-else-if="props.id === 'projects'" v-for="project in projects" :key="project.id" class="file-explorer-file" @dblclick="openProject(project)">
+					<img class="file-icon" :src="project.icon" :alt="`${project.name} icon`" />
+					<div class="file-name">{{ project.name }}</div>
 				</div>
 			</div>
 		</div>
@@ -138,8 +142,8 @@ function openCertification(certification: Certification) {
 }
 
 .file-explorer-directory-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+	list-style: none;
+	padding: 0;
+	margin: 0;
 }
 </style>

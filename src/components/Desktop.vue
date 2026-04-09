@@ -6,33 +6,20 @@ import Window from "./Window.vue";
 import FileExplorer from "./FileExplorer.vue";
 import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
 import WebBrowser from "./WebBrowser.vue";
+import ProjectsWindow from "./ProjectsWindow.vue";
 
-
-type DesktopApp = {
-	id: string;
-	label: string;
-	icon: string;
-	defaultWidth: number;
-	defaultHeight: number;
-};
+import { projects } from "../data/Projects";
+import { desktopApps, type DesktopApp } from "../data/DesktopApps";
 
 type OpenWindow = DesktopApp & {
 	isMinimized: boolean;
 	zIndex: number;
-	windowType: "app" | "browser";
+	windowType: "app" | "browser" | "project";
 	url?: string;
 	objectUrl?: string;
 	isPdf?: boolean;
+	projectId?: string;
 };
-
-const desktopApps: DesktopApp[] = [
-	{ id: "projects", label: "My Projects", icon: "📁", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "about", label: "About Me", icon: "📄", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "resume", label: "Resume", icon: "📋", defaultWidth: 600, defaultHeight: 950 },
-	{ id: "contact", label: "Contact", icon: "✉️", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "certifications", label: "Certs", icon: "🏆", defaultWidth: 800, defaultHeight: 800 },
-	{ id: "recycle-bin", label: "Recycle Bin", icon: "🗑️", defaultWidth: 400, defaultHeight: 300 },
-];
 
 const openWindows = ref<OpenWindow[]>([]);
 
@@ -148,6 +135,63 @@ function openBrowserWindow(file: { id: string; title: string; filePath: string; 
 		isPdf: true,
 	});
 }
+
+function openProjectBrowserWindow(projectId: string, url: string, title: string) {
+	const browserWindowId = `browser-project-${projectId}`;
+	const existingWindow = openWindows.value.find(openWindow => openWindow.id === browserWindowId);
+
+	if (existingWindow) {
+		import.meta.env.DEV && console.log("Browser window is already open, restoring if minimized:", browserWindowId);
+		existingWindow.isMinimized = false;
+		focusApp(browserWindowId);
+		return;
+	}
+
+	const browserIcon = desktopApps.find(desktopApp => desktopApp.id === "projects")?.icon ?? "[web]";
+
+	openWindows.value.push({
+		id: browserWindowId,
+		label: title,
+		icon: browserIcon,
+		defaultWidth: 900,
+		defaultHeight: 700,
+		isMinimized: false,
+		zIndex: nextZIndex++,
+		windowType: "browser",
+		url,
+	});
+}
+
+function openProjectsWindow(projectId: string) {
+	const windowId = `project-${projectId}`;
+	const existingWindow = openWindows.value.find(openWindow => openWindow.id === windowId);
+
+	if (existingWindow) {
+		import.meta.env.DEV && console.log("Project window is already open, restoring if minimized.", projectId);
+		existingWindow.isMinimized = false;
+		focusApp(windowId);
+		return;
+	}
+
+	const project = projects.find(proj => proj.id === projectId);
+
+	if (!project) {
+		import.meta.env.DEV && console.log("Project not found with id:", projectId);
+		return;
+	}
+
+	openWindows.value.push({
+		id: windowId,
+		label: project.name,
+		icon: desktopApps.find(desktopApp => desktopApp.id === "projects")?.icon ?? "[proj]",
+		defaultWidth: 700,
+		defaultHeight: 700,
+		isMinimized: false,
+		zIndex: nextZIndex++,
+		windowType: "project",
+		projectId: project.id,
+	});
+}
 </script>
 
 <template>
@@ -167,13 +211,14 @@ function openBrowserWindow(file: { id: string; title: string; filePath: string; 
 			:z-index="app.zIndex"
 			@close="closeApp"
 			@minimize="minimizeApp"
-			@focus="focusApp"
-		>
+			@focus="focusApp">
+
 			<WebBrowser v-if="app.id === 'resume'" url="https://www.juviscript.dev/resume" :objectUrl="resumePdf" :isPdf="true" />
 			<WebBrowser v-else-if="app.windowType === 'browser'" :url="app.url || ''" :objectUrl="app.objectUrl" :isPdf="app.isPdf || false" />
 			<FileExplorer v-else-if="app.id === 'certifications'" id="certifications" url="C:\Users\Juvilane\Certifications" @open-file="openBrowserWindow" />
-			
-			<p v-else-if="app.id === 'projects'">This is the content of the Projects window.</p>
+			<FileExplorer v-else-if="app.id === 'projects'" id="projects" url="C:\Users\Juvilane\Projects" @open-project="openProjectsWindow" />
+			<ProjectsWindow v-else-if="app.windowType === 'project' && app.projectId" :project-id="app.projectId" @open-url="openProjectBrowserWindow"/>
+
 			<p v-else-if="app.id === 'about'">This is the content of the About window.</p>
 			<p v-else-if="app.id === 'contact'">This is the content of the Contact window.</p>
 			<p v-else-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
