@@ -171,7 +171,6 @@ function handleWindowAction(action: string) {
 
 .content {
 	height: calc(100% - 29px);
-	padding: 12px;
 	overflow: auto;
 }
 </style>

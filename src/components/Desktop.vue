@@ -3,6 +3,10 @@ import { ref } from "vue";
 import DesktopIcon from "./DesktopIcon.vue";
 import Taskbar from "./Taskbar.vue";
 import Window from "./Window.vue";
+import FileExplorer from "./FileExplorer.vue";
+import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
+import WebBrowser from "./WebBrowser.vue";
+
 
 type DesktopApp = {
 	id: string;
@@ -15,18 +19,23 @@ type DesktopApp = {
 type OpenWindow = DesktopApp & {
 	isMinimized: boolean;
 	zIndex: number;
+	windowType: "app" | "browser";
+	url?: string;
+	objectUrl?: string;
+	isPdf?: boolean;
 };
 
 const desktopApps: DesktopApp[] = [
 	{ id: "projects", label: "My Projects", icon: "📁", defaultWidth: 400, defaultHeight: 300 },
 	{ id: "about", label: "About Me", icon: "📄", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "resume", label: "Resume", icon: "📋", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "resume", label: "Resume", icon: "📋", defaultWidth: 600, defaultHeight: 950 },
 	{ id: "contact", label: "Contact", icon: "✉️", defaultWidth: 400, defaultHeight: 300 },
-	{ id: "certifications", label: "Certs", icon: "🏆", defaultWidth: 400, defaultHeight: 300 },
+	{ id: "certifications", label: "Certs", icon: "🏆", defaultWidth: 800, defaultHeight: 800 },
 	{ id: "recycle-bin", label: "Recycle Bin", icon: "🗑️", defaultWidth: 400, defaultHeight: 300 },
 ];
 
 const openWindows = ref<OpenWindow[]>([]);
+
 let nextZIndex = 1;
 
 function openApp(id: string) {
@@ -50,6 +59,7 @@ function openApp(id: string) {
 			...app,
 			isMinimized: false,
 			zIndex: nextZIndex++,
+			windowType: "app",
 		});
 	}
 }
@@ -110,6 +120,34 @@ function focusApp(id: string) {
 
 	openWindow.zIndex = nextZIndex++;
 }
+
+function openBrowserWindow(file: { id: string; title: string; filePath: string; displayUrl: string }) {
+	const browserWindowId = `browser-${file.id}`;
+	const existingWindow = openWindows.value.find(openWindow => openWindow.id === browserWindowId);
+
+	if (existingWindow) {
+		import.meta.env.DEV && console.log("Browser window is already open, restoring if minimized:", browserWindowId);
+		existingWindow.isMinimized = false;
+		focusApp(browserWindowId);
+		return;
+	}
+
+	const browserIcon = desktopApps.find(desktopApp => desktopApp.id === "certifications")?.icon ?? "[web]";
+
+	openWindows.value.push({
+		id: browserWindowId,
+		label: file.title,
+		icon: browserIcon,
+		defaultWidth: 900,
+		defaultHeight: 700,
+		isMinimized: false,
+		zIndex: nextZIndex++,
+		windowType: "browser",
+		url: file.displayUrl,
+		objectUrl: file.filePath,
+		isPdf: true,
+	});
+}
 </script>
 
 <template>
@@ -131,12 +169,14 @@ function focusApp(id: string) {
 			@minimize="minimizeApp"
 			@focus="focusApp"
 		>
-			<p v-if="app.id === 'resume'">This is the content of the Resume window.</p>
-			<p v-if="app.id === 'projects'">This is the content of the Projects window.</p>
-			<p v-if="app.id === 'about'">This is the content of the About window.</p>
-			<p v-if="app.id === 'contact'">This is the content of the Contact window.</p>
-			<p v-if="app.id === 'certifications'">This is the content of the Certifications window.</p>
-			<p v-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
+			<WebBrowser v-if="app.id === 'resume'" url="https://www.juviscript.dev/resume" :objectUrl="resumePdf" :isPdf="true" />
+			<WebBrowser v-else-if="app.windowType === 'browser'" :url="app.url || ''" :objectUrl="app.objectUrl" :isPdf="app.isPdf || false" />
+			<FileExplorer v-else-if="app.id === 'certifications'" id="certifications" url="C:\Users\Juvilane\Certifications" @open-file="openBrowserWindow" />
+			
+			<p v-else-if="app.id === 'projects'">This is the content of the Projects window.</p>
+			<p v-else-if="app.id === 'about'">This is the content of the About window.</p>
+			<p v-else-if="app.id === 'contact'">This is the content of the Contact window.</p>
+			<p v-else-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
 		</Window>
 
 		<Taskbar :windows="openWindows" @select-window="handleTaskbarIconClick" />
