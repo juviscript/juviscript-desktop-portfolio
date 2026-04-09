@@ -7,6 +7,7 @@ import FileExplorer from "./FileExplorer.vue";
 import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
 import WebBrowser from "./WebBrowser.vue";
 import ProjectsWindow from "./ProjectsWindow.vue";
+import AboutWindow from "./AboutWindow.vue";
 
 import { projects } from "../data/Projects";
 import { desktopApps, type DesktopApp } from "../data/DesktopApps";
@@ -218,8 +219,8 @@ function openProjectsWindow(projectId: string) {
 			<FileExplorer v-else-if="app.id === 'certifications'" id="certifications" url="C:\Users\Juvilane\Certifications" @open-file="openBrowserWindow" />
 			<FileExplorer v-else-if="app.id === 'projects'" id="projects" url="C:\Users\Juvilane\Projects" @open-project="openProjectsWindow" />
 			<ProjectsWindow v-else-if="app.windowType === 'project' && app.projectId" :project-id="app.projectId" @open-url="openProjectBrowserWindow"/>
-
-			<p v-else-if="app.id === 'about'">This is the content of the About window.</p>
+            <AboutWindow v-else-if="app.id === 'about'" />
+            
 			<p v-else-if="app.id === 'contact'">This is the content of the Contact window.</p>
 			<p v-else-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
 		</Window>
