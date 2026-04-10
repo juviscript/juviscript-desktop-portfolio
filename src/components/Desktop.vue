@@ -11,6 +11,7 @@ import AboutWindow from "./AboutWindow.vue";
 
 import { projects } from "../data/Projects";
 import { desktopApps, type DesktopApp } from "../data/DesktopApps";
+import ContactWindow from "./ContactWindow.vue";
 
 type OpenWindow = DesktopApp & {
 	isMinimized: boolean;
@@ -220,8 +221,8 @@ function openProjectsWindow(projectId: string) {
 			<FileExplorer v-else-if="app.id === 'projects'" id="projects" url="C:\Users\Juvilane\Projects" @open-project="openProjectsWindow" />
 			<ProjectsWindow v-else-if="app.windowType === 'project' && app.projectId" :project-id="app.projectId" @open-url="openProjectBrowserWindow"/>
             <AboutWindow v-else-if="app.id === 'about'" />
+            <ContactWindow v-else-if="app.id === 'contact'" />
             
-			<p v-else-if="app.id === 'contact'">This is the content of the Contact window.</p>
 			<p v-else-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
 		</Window>
 
