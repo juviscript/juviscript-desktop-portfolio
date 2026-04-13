@@ -1,3 +1,32 @@
+@import url("https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap");
+
+:root {
+	/* Brand */
+	--color-bg-main: #75c8ae;
+	--color-ink: #5a3d2b;
+	--color-surface: #ffecb4;
+	--color-surface-light: #fff4cf;
+	--color-accent: #e5771e;
+	--color-accent-2: #f4a127;
+	--color-border-dark: #442d20;
+	--color-mint-light: #9fdbc8;
+
+	/* Typography */
+	--font-bios: "VT323", monospace;
+	--font-ui: "VT323", monospace;
+	--font-chrome: "Silkscreen", monospace;
+
+	--text-xs: 14px;
+	--text-sm: 16px;
+	--text-md: 20px;
+	--text-lg: 24px;
+	--text-xl: 32px;
+
+	--line-tight: 1.1;
+	--line-normal: 1.4;
+	--line-loose: 1.6;
+}
+
 html,
 body,
 #app {
@@ -8,8 +37,15 @@ body,
 
 body {
   overflow: hidden;
+  background: var(--color-surface-light);
 }
 
+#app {
+  display: grid;
+  place-items: center;
+}
+
+
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }

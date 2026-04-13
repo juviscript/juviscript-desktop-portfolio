@@ -38,13 +38,7 @@ onUnmounted(() => {
 		</button>
 
 		<div class="taskbar-middle">
-			<button
-				v-for="window in windows"
-				:key="window.id"
-				class="taskbar-app"
-				:class="{ minimized: window.isMinimized }"
-				@click="() => emit('select-window', window.id)"
-			>
+			<button v-for="window in windows" :key="window.id" class="taskbar-app" :class="{ minimized: window.isMinimized }" @click="() => emit('select-window', window.id)">
 				<span class="app-icon">{{ window.icon }}</span>
 				<span class="app-label">{{ window.label }}</span>
 			</button>
@@ -58,11 +52,12 @@ onUnmounted(() => {
 
 <style scoped>
 .taskbar {
-	position: fixed;
+	position: absolute;
 	bottom: 0;
 	left: 0;
-	width: 100%;
+	right: 0;
 	height: 36px;
+	width: 100%;
 	background-color: #c0c0c0;
 	border-top: 2px solid #fff;
 	display: flex;

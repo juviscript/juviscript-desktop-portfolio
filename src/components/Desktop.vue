@@ -234,8 +234,11 @@ function openProjectsWindow(projectId: string) {
 .desktop {
 	width: 100%;
 	height: 100%;
-	background: linear-gradient(to bottom, #87ceeb 0%, #b0e0f5 60%, #4a8f3f 60%, #3a7a2f 100%);
-	overflow: hidden;
+background-image: url("../assets/Windows XP Background - Hill with Blue Sky - 8-bit.jpg");
+background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;	
+overflow: hidden;
 	position: relative;
 }
 
