@@ -1,9 +1,9 @@
-import AWSIcon from "../assets/aws-cloud-practitioner-icon.png";
-import CompTIAIcon from "../assets/comptia-project-plus-icon.png";
-import ITILIcon from "../assets/people-cert-itil-4-icon.png";
-import AWSCertificate from "../assets/Certification - AWS - AWS Certified Cloud Practitioner - Juvi Panaguiton.pdf";
-import CompTIACertificate from "../assets/Certification - CompTIA - Project+ - Juvi Panaguiton.pdf";
-import ITILCertificate from "../assets/Certification - PeopleCert - ITIL 4 - Juvi Panaguiton.pdf";
+import AWSIcon from "../assets/certifications/certification-icons/aws-cloud-practitioner-icon.png";
+import CompTIAIcon from "../assets/certifications/certification-icons/comptia-project-plus-icon.png";
+import ITILIcon from "../assets/certifications/certification-icons/people-cert-itil-4-icon.png";
+import AWSCertificate from "../assets/certifications/Certification - AWS - AWS Certified Cloud Practitioner - Juvi Panaguiton.pdf";
+import CompTIACertificate from "../assets/certifications/Certification - CompTIA - Project+ - Juvi Panaguiton.pdf";
+import ITILCertificate from "../assets/certifications/Certification - PeopleCert - ITIL 4 - Juvi Panaguiton.pdf";
 
 export type Certification = {
 	id: string;

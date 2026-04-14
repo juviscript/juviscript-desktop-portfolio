@@ -202,6 +202,8 @@ function openProjectsWindow(projectId: string) {
 			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :label="app.label" :icon="app.icon" @open="openApp" />
 		</div>
 
+		<a class="icons-attribution" href="https://icons8.com" target="_blank" rel="noopener noreferrer">Icons by Icons8</a>
+
 		<Window
 			v-for="app in openWindows"
 			v-show="!app.isMinimized"
@@ -234,21 +236,79 @@ function openProjectsWindow(projectId: string) {
 .desktop {
 	width: 100%;
 	height: 100%;
-background-image: url("../assets/Windows XP Background - Hill with Blue Sky - 8-bit.jpg");
-background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;	
-overflow: hidden;
+	background-color: #edc37a;
+	background-image:
+		linear-gradient(
+			45deg,
+			rgba(255, 246, 220, 0.18) 25%,
+			transparent 25%,
+			transparent 75%,
+			rgba(255, 246, 220, 0.18) 75%,
+			rgba(255, 246, 220, 0.18)
+		),
+		linear-gradient(
+			45deg,
+			rgba(255, 246, 220, 0.18) 25%,
+			transparent 25%,
+			transparent 75%,
+			rgba(255, 246, 220, 0.18) 75%,
+			rgba(255, 246, 220, 0.18)
+		),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+	background-size:
+		3rem 3rem,
+		3rem 3rem,
+		auto;
+	background-position:
+		0 0,
+		1.5rem 1.5rem,
+		center;
+	overflow: hidden;
 	position: relative;
+}
+
+.desktop::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(rgba(255, 255, 255, 0.08) 0.0625rem, transparent 0.0625rem),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0.0625rem, transparent 0.0625rem);
+	background-size: 3rem 3rem;
+	opacity: 0.32;
+	pointer-events: none;
 }
 
 .icon-grid {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	padding: 12px 8px;
+	gap: var(--space-4);
+	padding: var(--space-5);
 	position: absolute;
 	top: 0;
 	left: 0;
+	z-index: 1;
+}
+
+.icons-attribution {
+	position: absolute;
+	right: var(--space-5);
+	bottom: 5.75rem;
+	padding: 0.4rem 0.8rem;
+	border-radius: var(--radius-pill);
+	background: rgba(255, 249, 241, 0.7);
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
+	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.08);
+	color: var(--color-ink-soft);
+	font-size: var(--text-2xs);
+	font-weight: 600;
+	text-decoration: none;
+	backdrop-filter: blur(0.5rem);
+	z-index: 2;
+}
+
+.icons-attribution:hover {
+	color: var(--color-ink);
+	background: rgba(255, 249, 241, 0.88);
 }
 </style>

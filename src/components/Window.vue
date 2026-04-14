@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, onMounted, ref } from "vue";
 import WindowControlButton from "./WindowControlButton.vue";
+import closeWindowIcon from "../assets/window-icons/close-window-icon.svg?raw";
+import maximizeWindowIcon from "../assets/window-icons/maximize-window-icon.svg?raw";
+import minimizeWindowIcon from "../assets/window-icons/minimize-window-icon.svg?raw";
 
 const props = defineProps<{
 	id: string;
@@ -16,15 +19,46 @@ const emit = defineEmits<{
 	focus: [id: string];
 }>();
 
-const x = ref(100);
-const y = ref(100);
+const TASKBAR_HEIGHT = 88;
+const TITLE_BAR_HEIGHT = 56;
+const MIN_VISIBLE_TITLE_WIDTH = 160;
+
+const windowElement = ref<HTMLElement | null>(null);
+
+function getDesktopBounds() {
+	const parentElement = windowElement.value?.parentElement;
+
+	if (!parentElement) {
+		return {
+			left: 0,
+			top: 0,
+			width: window.innerWidth,
+			height: window.innerHeight,
+		};
+	}
+
+	const rect = parentElement.getBoundingClientRect();
+
+	return {
+		left: rect.left,
+		top: rect.top,
+		width: rect.width,
+		height: rect.height,
+	};
+}
+
+function centerWindow() {
+	const { width, height } = getDesktopBounds();
+
+	x.value = Math.max((width - currentWidth.value) / 2, 0);
+	y.value = Math.max((height - TASKBAR_HEIGHT - currentHeight.value) / 2, 0);
+}
+
+const x = ref(0);
+const y = ref(0);
 const currentWidth = ref(props.defaultWidth);
 const currentHeight = ref(props.defaultHeight);
 const isMaximized = ref(false);
-
-const TASKBAR_HEIGHT = 36;
-const TITLE_BAR_HEIGHT = 29;
-const MIN_VISIBLE_TITLE_WIDTH = 120;
 
 let offsetX = 0;
 let offsetY = 0;
@@ -49,22 +83,25 @@ function grabWindow(event: MouseEvent) {
 		return;
 	}
 
-	offsetX = event.clientX - x.value;
-	offsetY = event.clientY - y.value;
+	const { left, top } = getDesktopBounds();
+
+	offsetX = event.clientX - left - x.value;
+	offsetY = event.clientY - top - y.value;
 
 	document.addEventListener("mousemove", dragWindow);
 	document.addEventListener("mouseup", stopDragging);
 }
 
 function dragWindow(event: MouseEvent) {
-	const nextX = event.clientX - offsetX;
-	const nextY = event.clientY - offsetY;
+	const { left, top, width, height } = getDesktopBounds();
+	const nextX = event.clientX - left - offsetX;
+	const nextY = event.clientY - top - offsetY;
 	const visibleTitleWidth = Math.min(currentWidth.value, MIN_VISIBLE_TITLE_WIDTH);
 
 	const minX = visibleTitleWidth - currentWidth.value;
-	const maxX = window.innerWidth - visibleTitleWidth;
+	const maxX = width - visibleTitleWidth;
 	const minY = 0;
-	const maxY = window.innerHeight - TASKBAR_HEIGHT - TITLE_BAR_HEIGHT;
+	const maxY = height - TASKBAR_HEIGHT - TITLE_BAR_HEIGHT;
 
 	x.value = clamp(nextX, minX, maxX);
 	y.value = clamp(nextY, minY, maxY);
@@ -99,6 +136,7 @@ function handleWindowAction(action: string) {
 			currentWidth.value = savedBounds.value.width;
 			currentHeight.value = savedBounds.value.height;
 		}
+
 		isMaximized.value = false;
 		return;
 	}
@@ -107,10 +145,19 @@ function handleWindowAction(action: string) {
 		emit("close", props.id);
 	}
 }
+
+onMounted(() => {
+	nextTick(() => {
+		if (!isMaximized.value) {
+			centerWindow();
+		}
+	});
+});
 </script>
 
 <template>
 	<div
+		ref="windowElement"
 		class="window"
 		:class="{ maximized: isMaximized }"
 		:style="{
@@ -125,16 +172,18 @@ function handleWindowAction(action: string) {
 			zIndex: props.zIndex,
 		}"
 		@click="emit('focus', props.id)">
-		<div class="title-bar" @mousedown="grabWindow">
-			<span class="title">{{ props.title }}</span>
-			<div class="window-controls">
-				<WindowControlButton action="minimize" icon="-" @windowAction="handleWindowAction" />
-				<WindowControlButton action="maximize" icon="[]" @windowAction="handleWindowAction" />
-				<WindowControlButton action="close" icon="X" @windowAction="handleWindowAction" />
+		<div class="window-frame">
+			<div class="title-bar" @mousedown="grabWindow">
+				<span class="title">{{ props.title }}</span>
+				<div class="window-controls">
+					<WindowControlButton action="minimize" :iconSvg="minimizeWindowIcon" @windowAction="handleWindowAction" />
+					<WindowControlButton action="maximize" :iconSvg="maximizeWindowIcon" @windowAction="handleWindowAction" />
+					<WindowControlButton action="close" :iconSvg="closeWindowIcon" @windowAction="handleWindowAction" />
+				</div>
 			</div>
-		</div>
-		<div class="content">
-			<slot />
+			<div class="content">
+				<slot />
+			</div>
 		</div>
 	</div>
 </template>
@@ -142,35 +191,74 @@ function handleWindowAction(action: string) {
 <style scoped>
 .window {
 	position: absolute;
-	background-color: white;
-	border: 2px solid #c0c0c0;
-	box-shadow: 2px 2px 0 #404040;
+	box-sizing: border-box;
+	padding: var(--space-2);
+	border-radius: var(--radius-xl);
+	background: linear-gradient(180deg, var(--color-frame-top), var(--color-frame-bottom));
+	border: var(--border-thin) solid rgba(222, 107, 72, 0.18);
+	box-shadow: var(--shadow-card-strong);
 }
 
 .window.maximized {
 	left: 0;
 	top: 0;
 	right: 0;
-	bottom: 36px;
+	bottom: 5.5rem;
+}
+
+.window-frame {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--color-surface);
+	border-radius: calc(var(--radius-xl) - var(--space-2));
+	box-shadow: inset 0 0 0 var(--border-thin) rgba(222, 107, 72, 0.12);
+	overflow: hidden;
 }
 
 .title-bar {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	background-color: #0078d7;
-	color: white;
-	padding: 4px 8px;
+	gap: var(--space-4);
+	background: linear-gradient(180deg, #fffdfa 0%, var(--color-surface-strong) 100%);
+	color: var(--color-ink);
+	padding: var(--space-4) var(--space-5) var(--space-3);
 	user-select: none;
+	border-bottom: var(--border-thin) solid rgba(222, 107, 72, 0.16);
+	font-family: var(--font-chrome);
+	position: relative;
+}
+
+.title-bar::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 0.35rem;
+	background: linear-gradient(90deg, var(--color-accent-red), var(--color-accent-orange), var(--color-accent-gold));
+}
+
+.title {
+	display: inline-flex;
+	align-items: center;
+	min-height: 2.1rem;
+	font-size: var(--text-lg);
+	font-weight: 600;
+	letter-spacing: 0.01em;
 }
 
 .window-controls {
 	display: flex;
-	gap: 4px;
+	gap: var(--space-2);
+	flex-shrink: 0;
 }
 
 .content {
-	height: calc(100% - 29px);
+	flex: 1;
 	overflow: auto;
+	background: var(--color-surface);
+	padding: var(--space-4);
 }
 </style>
