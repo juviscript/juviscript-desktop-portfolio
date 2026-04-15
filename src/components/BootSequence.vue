@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import ScreenPowerOn from "./ScreenPowerOn.vue";
 import jsOsLogo from "../assets/jsOS Logo.png";
 import jsOsBiosLogo from "../assets/jsOS BIOS Logo.png";
 
@@ -148,57 +149,59 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<div class="boot-sequence">
-		<div v-if="showBios" class="bios-screen">
-			<div class="bios-text">
-				<div>
-					<div class="bios-phase-1">
-						<div>
-							<p>JuviScriptBIOS 1.0 Release 1.0</p>
-							<p>Copyright 1995-2026 Juviscript Technologies Ltd.</p>
-							<p>All Rights Reserved</p>
-							<p>Copyright 1995-2026 Intel Corporation</p>
-							<p>4S4E82M0.10A.0022.P06</p>
+	<ScreenPowerOn>
+		<div class="boot-sequence">
+			<div v-if="showBios" class="bios-screen">
+				<div class="bios-text">
+					<div>
+						<div class="bios-phase-1">
+							<div>
+								<p>JuviScriptBIOS 1.0 Release 1.0</p>
+								<p>Copyright 1995-2026 Juviscript Technologies Ltd.</p>
+								<p>All Rights Reserved</p>
+								<p>Copyright 1995-2026 Intel Corporation</p>
+								<p>4S4E82M0.10A.0022.P06</p>
+							</div>
+
+							<img :src="jsOsBiosLogo" alt="jsOS BIOS Logo" style="width: 350px; opacity: .75; margin-right: 2rem;" />
 						</div>
-
-                        <img :src="jsOsBiosLogo" alt="jsOS BIOS Logo" style="width: 350px; opacity: .75; margin-right: 2rem;" /> 
+						<div v-if="showBiosPhaseTwo" class="bios-phase-2">
+							<p>JuviScript Systems</p>
+							<p>jsOS Dimension J500</p>
+							<p>BIOS Version A05</p>
+							<p>Intel Pentium III Processor 500 MHz</p>
+							<p>256MB System RAM Passed</p>
+							<br />
+							<p>Keyboard ............ Detected</p>
+							<p>Mouse ............... Detected</p>
+						</div>
+						<div v-if="showBiosPhaseThree" class="bios-phase-3">
+							<p>Fixed Disk 0: WDC WD200EB-00CPF0-(PM)</p>
+							<p>ATAPI CD-ROM: CRD-8400-SM</p>
+							<p>ATAPI CD-ROM: CRD-8400-SM</p>
+						</div>
 					</div>
-					<div v-if="showBiosPhaseTwo" class="bios-phase-2">
-						<p>JuviScript Systems</p>
-						<p>jsOS Dimension J500</p>
-						<p>BIOS Version A05</p>
-						<p>Intel Pentium III Processor 500 MHz</p>
-						<p>256MB System RAM Passed</p>
-						<br />
-						<p>Keyboard ............ Detected</p>
-						<p>Mouse ............... Detected</p>
-					</div>
-					<div v-if="showBiosPhaseThree" class="bios-phase-3">
-						<p>Fixed Disk 0: WDC WD200EB-00CPF0-(PM)</p>
-						<p>ATAPI CD-ROM: CRD-8400-SM</p>
-						<p>ATAPI CD-ROM: CRD-8400-SM</p>
+					<div>
+						<p>Press &lt;Del&gt; to enter SETUP</p>
+						<p>Press SPACE to skip</p>
 					</div>
 				</div>
-				<div>
-					<p>Press &lt;Del&gt; to enter SETUP</p>
-					<p>Press SPACE to skip</p>
+			</div>
+
+			<div v-if="showLogo" class="logo-screen">
+				<div class="logo-container">
+					<img :src="jsOsLogo" alt="jsOS logo" class="logo" />
+
+					<div>
+						<div class="loading-blocks" aria-label="Loading progress" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
+							<div v-for="block in totalLoadingBlocks" :key="block" class="loading-block" :class="{ active: block <= filledLoadingBlocks }"></div>
+						</div>
+						<p class="skip-hint">Press SPACE to skip</p>
+					</div>
 				</div>
 			</div>
 		</div>
-
-		<div v-if="showLogo" class="logo-screen">
-			<div class="logo-container">
-				<img :src="jsOsLogo" alt="jsOS logo" class="logo" />
-
-				<div>
-					<div class="loading-blocks" aria-label="Loading progress" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
-						<div v-for="block in totalLoadingBlocks" :key="block" class="loading-block" :class="{ active: block <= filledLoadingBlocks }"></div>
-					</div>
-					<p class="skip-hint">Press SPACE to skip</p>
-				</div>
-			</div>
-		</div>
-	</div>
+	</ScreenPowerOn>
 </template>
 
 <style scoped>
