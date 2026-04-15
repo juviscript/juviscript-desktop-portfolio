@@ -209,6 +209,14 @@ function closeMobileApp() {
 	workspaceState.mobile.activeAppId = null;
 }
 
+function closeMobileAppById(id: string) {
+	workspaceState.mobile.recentAppIds = workspaceState.mobile.recentAppIds.filter(existingId => existingId !== id);
+
+	if (workspaceState.mobile.activeAppId === id) {
+		workspaceState.mobile.activeAppId = null;
+	}
+}
+
 function switchMobileApp(id: string) {
 	openMobileApp(id);
 }
@@ -226,6 +234,7 @@ export function useWorkspaceState() {
 		openDesktopProjectWindow,
 		openMobileApp,
 		closeMobileApp,
+		closeMobileAppById,
 		switchMobileApp,
 	};
 }

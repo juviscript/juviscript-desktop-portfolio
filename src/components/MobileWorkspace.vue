@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { desktopApps } from "../data/DesktopApps";
 import calendarDockIcon from "../assets/mobile-icons/calendar-icon.gif";
 import messagesDockIcon from "../assets/mobile-icons/messages-icon.png";
@@ -8,7 +8,7 @@ import settingsDockIcon from "../assets/mobile-icons/settings-icon.png";
 import wifiIcon from "../assets/mobile-icons/wifi-icon.svg";
 import { useWorkspaceState } from "../composables/useWorkspaceState";
 
-const { workspaceState, openMobileApp, closeMobileApp, switchMobileApp } = useWorkspaceState();
+const { workspaceState, openMobileApp, closeMobileApp, closeMobileAppById, switchMobileApp } = useWorkspaceState();
 
 const currentTime = computed(() =>
 	new Intl.DateTimeFormat("en-US", {
@@ -24,6 +24,11 @@ const dockApps = [
 	{ id: "settings", label: "Settings", icon: settingsDockIcon },
 ];
 
+const isAppSwitcherOpen = ref(false);
+const indicatorDragStartY = ref<number | null>(null);
+const indicatorActivePointerId = ref<number | null>(null);
+const dragOpenedSwitcher = ref(false);
+
 const activeApp = computed(() =>
 	workspaceState.mobile.activeAppId
 		? desktopApps.find(app => app.id === workspaceState.mobile.activeAppId) ?? null
@@ -35,6 +40,134 @@ const recentApps = computed(() =>
 		.map(id => desktopApps.find(app => app.id === id))
 		.filter((app): app is (typeof desktopApps)[number] => Boolean(app)),
 );
+
+function getAppPreviewCopy(id: string) {
+	switch (id) {
+		case "about":
+			return "Profile details, experience highlights, and core stack overview.";
+		case "contact":
+			return "Direct message form with email delivery through the Cloudflare contact flow.";
+		case "projects":
+			return "Project directory with entries that can open deeper detail views and live links.";
+		case "certifications":
+			return "Certification explorer with document previews and linked PDF browser windows.";
+		case "resume":
+			return "Resume preview with PDF rendering and browser-style navigation shell.";
+		case "recycle-bin":
+			return "Still empty.";
+		default:
+			return "Placeholder mobile preview.";
+	}
+}
+
+function getAppPreviewEyebrow(id: string) {
+	switch (id) {
+		case "about":
+			return "Profile";
+		case "contact":
+			return "Message Center";
+		case "projects":
+			return "Project Directory";
+		case "certifications":
+			return "Document Vault";
+		case "resume":
+			return "Resume Viewer";
+		case "recycle-bin":
+			return "System";
+		default:
+			return "App Preview";
+	}
+}
+
+function openAppSwitcher() {
+	if (!recentApps.value.length) {
+		return;
+	}
+
+	isAppSwitcherOpen.value = true;
+}
+
+function closeAppSwitcher() {
+	isAppSwitcherOpen.value = false;
+}
+
+function selectAppFromSwitcher(id: string) {
+	switchMobileApp(id);
+	closeAppSwitcher();
+}
+
+function closeAppFromSwitcher(id: string) {
+	closeMobileAppById(id);
+
+	if (recentApps.value.length <= 1) {
+		closeAppSwitcher();
+	}
+}
+
+function handleIndicatorPointerDown(event: PointerEvent) {
+	const indicatorButton = event.currentTarget as HTMLElement | null;
+
+	indicatorDragStartY.value = event.clientY;
+	indicatorActivePointerId.value = event.pointerId;
+	dragOpenedSwitcher.value = false;
+	indicatorButton?.setPointerCapture(event.pointerId);
+}
+
+function handleIndicatorPointerMove(event: PointerEvent) {
+	if (
+		indicatorDragStartY.value === null
+		|| indicatorActivePointerId.value !== event.pointerId
+		|| dragOpenedSwitcher.value
+	) {
+		return;
+	}
+
+	const dragDistance = indicatorDragStartY.value - event.clientY;
+
+	if (dragDistance > 48) {
+		openAppSwitcher();
+		dragOpenedSwitcher.value = true;
+	}
+}
+
+function resetIndicatorDrag() {
+	indicatorDragStartY.value = null;
+	indicatorActivePointerId.value = null;
+
+	window.setTimeout(() => {
+		dragOpenedSwitcher.value = false;
+	}, 0);
+}
+
+function handleIndicatorPointerUp(event: PointerEvent) {
+	const indicatorButton = event.currentTarget as HTMLElement | null;
+
+	if (indicatorButton?.hasPointerCapture(event.pointerId)) {
+		indicatorButton.releasePointerCapture(event.pointerId);
+	}
+
+	resetIndicatorDrag();
+}
+
+function handleIndicatorPointerCancel(event: PointerEvent) {
+	const indicatorButton = event.currentTarget as HTMLElement | null;
+
+	if (indicatorButton?.hasPointerCapture(event.pointerId)) {
+		indicatorButton.releasePointerCapture(event.pointerId);
+	}
+
+	resetIndicatorDrag();
+}
+
+function handleIndicatorClick() {
+	if (dragOpenedSwitcher.value) {
+		return;
+	}
+
+	if (activeApp.value) {
+		closeMobileApp();
+	}
+}
 </script>
 
 <template>
@@ -66,27 +199,8 @@ const recentApps = computed(() =>
 					<p class="mobile-widget-label">Workspace</p>
 					<p class="mobile-widget-value">{{ recentApps.length || desktopApps.length }} apps ready</p>
 					<p class="mobile-widget-copy">
-						Desktop windows and mobile app sessions now stay in memory when the shell switches between desktop and mobile layouts.
+						Drag the home indicator upward to open the app switcher and cycle through your recent mobile sessions.
 					</p>
-				</div>
-			</div>
-
-			<div v-if="recentApps.length" class="mobile-recents">
-				<div class="mobile-recents-header">
-					<p class="mobile-kicker">Recent Apps</p>
-					<span class="status-pill">{{ recentApps.length }} tracked</span>
-				</div>
-
-				<div class="mobile-recent-list">
-					<button
-						v-for="app in recentApps"
-						:key="`recent-${app.id}`"
-						class="mobile-recent-button"
-						type="button"
-						@click="switchMobileApp(app.id)">
-						<img class="mobile-recent-icon" :src="app.icon" :alt="`${app.label} icon`" />
-						<span class="mobile-recent-label">{{ app.label }}</span>
-					</button>
 				</div>
 			</div>
 
@@ -105,28 +219,25 @@ const recentApps = computed(() =>
 				</button>
 			</div>
 
-			<div class="home-indicator" aria-hidden="true"></div>
+			<button
+				class="home-indicator-button"
+				type="button"
+				aria-label="Open recent apps"
+				@pointerdown="handleIndicatorPointerDown"
+				@pointermove="handleIndicatorPointerMove"
+				@pointerup="handleIndicatorPointerUp"
+				@pointercancel="handleIndicatorPointerCancel"
+				@click="handleIndicatorClick">
+				<span class="home-indicator" aria-hidden="true"></span>
+			</button>
 		</div>
 
 		<div v-else class="mobile-app-view">
 			<div class="mobile-app-header">
-				<button class="mobile-back-button" type="button" @click="closeMobileApp">Home</button>
 				<div class="mobile-app-header-copy">
 					<p class="mobile-kicker">App Preview</p>
 					<h2 class="mobile-app-title">{{ activeApp?.label }}</h2>
 				</div>
-			</div>
-
-			<div v-if="recentApps.length > 1" class="mobile-app-switcher">
-				<button
-					v-for="app in recentApps"
-					:key="`switch-${app.id}`"
-					class="mobile-switch-pill"
-					:class="{ 'is-active': app.id === activeApp?.id }"
-					type="button"
-					@click="switchMobileApp(app.id)">
-					{{ app.label }}
-				</button>
 			</div>
 
 			<div class="mobile-app-card">
@@ -134,13 +245,93 @@ const recentApps = computed(() =>
 					<div class="mobile-app-card-dot"></div>
 					<p class="mobile-app-card-title">{{ activeApp?.label }}</p>
 				</div>
+				<p class="mobile-app-card-eyebrow">{{ getAppPreviewEyebrow(activeApp?.id ?? "") }}</p>
 				<p class="mobile-app-copy">
 					This is the placeholder mobile view for {{ activeApp?.label }}. Returning home does not clear the app session, so you can switch breakpoints or reopen it from the recent-app strip without losing state.
 				</p>
 			</div>
 
-			<div class="home-indicator" aria-hidden="true"></div>
+			<button
+				class="home-indicator-button"
+				type="button"
+				aria-label="Go home or open recent apps"
+				@pointerdown="handleIndicatorPointerDown"
+				@pointermove="handleIndicatorPointerMove"
+				@pointerup="handleIndicatorPointerUp"
+				@pointercancel="handleIndicatorPointerCancel"
+				@click="handleIndicatorClick">
+				<span class="home-indicator" aria-hidden="true"></span>
+			</button>
 		</div>
+
+		<transition name="mobile-switcher-fade">
+			<div v-if="isAppSwitcherOpen" class="mobile-switcher-overlay" @click.self="closeAppSwitcher">
+				<div class="mobile-switcher-sheet">
+					<div class="mobile-switcher-sheet-header">
+						<div>
+							<p class="mobile-kicker">Recent Apps</p>
+							<p class="mobile-switcher-count">{{ recentApps.length }} tracked</p>
+						</div>
+						<button class="mobile-switcher-done" type="button" @click="closeAppSwitcher">Done</button>
+					</div>
+
+					<div class="mobile-switcher-carousel">
+						<article
+							v-for="app in recentApps"
+							:key="`preview-${app.id}`"
+							class="mobile-switcher-card">
+							<button class="mobile-switcher-card-frame" type="button" @click="selectAppFromSwitcher(app.id)">
+								<div class="mobile-switcher-preview-body">
+									<div class="mobile-switcher-preview-window">
+										<div class="mobile-switcher-preview-status">
+											<span class="mobile-switcher-preview-time">{{ currentTime }}</span>
+											<div class="mobile-switcher-preview-status-icons">
+												<img class="mobile-switcher-preview-wifi" :src="wifiIcon" alt="" aria-hidden="true" />
+												<div class="mobile-switcher-preview-battery" aria-hidden="true">
+													<div class="mobile-switcher-preview-battery-body">
+														<div class="mobile-switcher-preview-battery-fill"></div>
+													</div>
+													<div class="mobile-switcher-preview-battery-cap"></div>
+												</div>
+											</div>
+										</div>
+										<div class="mobile-switcher-preview-window-body">
+											<div class="mobile-switcher-card-topbar">
+												<div class="mobile-switcher-app-copy">
+													<p class="mobile-switcher-app-label">{{ app.label }}</p>
+													<p class="mobile-switcher-app-state">
+														{{ app.id === activeApp?.id ? "Active now" : "In background" }}
+													</p>
+												</div>
+												<span class="mobile-switcher-preview-pill">{{ app.id === activeApp?.id ? "Live" : "Open" }}</span>
+											</div>
+
+											<div class="mobile-switcher-preview-surface">
+												<div class="mobile-switcher-preview-surface-header">
+													<div class="mobile-switcher-preview-dot"></div>
+													<p class="mobile-switcher-preview-window-title">{{ app.label }}</p>
+												</div>
+												<div class="mobile-switcher-preview-content">
+													<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
+													<p class="mobile-switcher-preview-title">{{ app.label }}</p>
+													<p class="mobile-switcher-preview-copy">{{ getAppPreviewCopy(app.id) }}</p>
+												</div>
+											</div>
+
+											<span class="mobile-switcher-preview-home" aria-hidden="true"></span>
+										</div>
+									</div>
+								</div>
+							</button>
+
+							<button class="mobile-switcher-close" type="button" @click="closeAppFromSwitcher(app.id)">
+								Close App
+							</button>
+						</article>
+					</div>
+				</div>
+			</div>
+		</transition>
 	</div>
 </template>
 
@@ -249,6 +440,8 @@ const recentApps = computed(() =>
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
+	position: relative;
+	padding-bottom: calc(var(--space-5) + 1.4rem);
 }
 
 .mobile-hero {
@@ -338,60 +531,6 @@ const recentApps = computed(() =>
 	align-content: start;
 }
 
-.mobile-recents {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-3);
-	margin-bottom: var(--space-4);
-}
-
-.mobile-recents-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--space-2);
-}
-
-.mobile-recent-list {
-	display: flex;
-	gap: var(--space-2);
-	overflow-x: auto;
-	padding-bottom: 0.1rem;
-	scrollbar-width: none;
-}
-
-.mobile-recent-list::-webkit-scrollbar {
-	display: none;
-}
-
-.mobile-recent-button {
-	flex: 0 0 5.25rem;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.45rem;
-	padding: 0.65rem 0.5rem;
-	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
-	border-radius: 1.15rem;
-	background: rgba(255, 249, 241, 0.7);
-	box-shadow: 0 0.65rem 1.1rem rgba(90, 61, 43, 0.08);
-	color: var(--color-ink);
-	cursor: pointer;
-}
-
-.mobile-recent-icon {
-	width: 2rem;
-	height: 2rem;
-	object-fit: contain;
-}
-
-.mobile-recent-label {
-	font-size: 0.72rem;
-	font-weight: 600;
-	line-height: 1.2;
-	text-align: center;
-}
-
 .mobile-app-button {
 	display: flex;
 	flex-direction: column;
@@ -445,6 +584,7 @@ const recentApps = computed(() =>
 
 .mobile-dock {
 	margin-top: auto;
+	margin-bottom: calc(var(--space-3) + 1rem);
 	display: flex;
 	gap: var(--space-2);
 	justify-content: center;
@@ -483,56 +623,11 @@ const recentApps = computed(() =>
 	gap: var(--space-4);
 }
 
-.mobile-app-switcher {
-	display: flex;
-	gap: var(--space-2);
-	overflow-x: auto;
-	padding-bottom: 0.1rem;
-	scrollbar-width: none;
-}
-
-.mobile-app-switcher::-webkit-scrollbar {
-	display: none;
-}
-
-.mobile-switch-pill {
-	flex: 0 0 auto;
-	min-height: 2rem;
-	padding: 0.35rem 0.8rem;
-	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
-	border-radius: var(--radius-pill);
-	background: rgba(255, 249, 241, 0.74);
-	color: var(--color-ink-soft);
-	font-size: var(--text-2xs);
-	font-weight: 700;
-	cursor: pointer;
-}
-
-.mobile-switch-pill.is-active {
-	background: linear-gradient(135deg, rgba(237, 109, 75, 0.95), rgba(241, 146, 73, 0.95));
-	color: white;
-}
-
 .mobile-app-header {
 	display: flex;
 	align-items: center;
+	justify-content: flex-start;
 	gap: var(--space-3);
-}
-
-.mobile-back-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 2.25rem;
-	padding: 0 var(--space-3);
-	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
-	border-radius: var(--radius-pill);
-	background: rgba(255, 249, 241, 0.88);
-	color: var(--color-ink);
-	font-size: var(--text-xs);
-	font-weight: 600;
-	cursor: pointer;
-	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.08);
 }
 
 .mobile-app-header-copy {
@@ -579,11 +674,408 @@ const recentApps = computed(() =>
 	line-height: var(--line-loose);
 }
 
+.mobile-app-card-eyebrow {
+	margin: 0 0 var(--space-2);
+	font-family: var(--font-chrome);
+	font-size: var(--text-2xs);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--color-ink-soft);
+}
+
+.home-indicator-button {
+	width: 9rem;
+	height: 1.75rem;
+	position: absolute;
+	left: 50%;
+	bottom: 0.2rem;
+	transform: translateX(-50%);
+	display: grid;
+	place-items: center;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	z-index: 4;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
 .home-indicator {
+	display: block;
 	width: 8rem;
-	height: 0.32rem;
-	margin: var(--space-3) auto 0;
+	height: 0.38rem;
 	border-radius: var(--radius-pill);
-	background: rgba(90, 61, 43, 0.22);
+	background: rgba(90, 61, 43, 0.34);
+	box-shadow:
+		0 0.15rem 0.5rem rgba(255, 255, 255, 0.28),
+		0 0.25rem 0.6rem rgba(90, 61, 43, 0.12);
+}
+
+.mobile-switcher-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	align-items: stretch;
+	padding: 0.85rem;
+	background: rgba(90, 61, 43, 0.18);
+	backdrop-filter: blur(0.5rem);
+}
+
+.mobile-switcher-sheet {
+	width: 100%;
+	border-radius: 0;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	min-height: 0;
+}
+
+.mobile-switcher-sheet-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: 0.15rem 0.4rem 0;
+}
+
+.mobile-switcher-count {
+	margin: 0.2rem 0 0;
+	font-size: var(--text-xs);
+	color: var(--color-ink-soft);
+}
+
+.mobile-switcher-done {
+	min-height: 2.15rem;
+	padding: 0.35rem 0.9rem;
+	border: var(--border-thin) solid rgba(255, 255, 255, 0.28);
+	border-radius: var(--radius-pill);
+	background: rgba(255, 249, 241, 0.74);
+	color: var(--color-ink);
+	font-size: var(--text-2xs);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.mobile-switcher-carousel {
+	display: flex;
+	align-items: stretch;
+	gap: 0;
+	overflow-x: auto;
+	padding: 0 1rem 0.2rem 0.8rem;
+	scroll-snap-type: x mandatory;
+	scroll-padding-inline: 1rem;
+	scrollbar-width: none;
+	flex: 1;
+	min-height: 0;
+	touch-action: pan-x;
+}
+
+.mobile-switcher-carousel::-webkit-scrollbar {
+	display: none;
+}
+
+.mobile-switcher-card {
+	scroll-snap-align: center;
+	flex: 0 0 calc(100% - 3.5rem);
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+	min-height: 0;
+	margin-inline-end: -18%;
+	position: relative;
+	z-index: 0;
+	transform-origin: center bottom;
+}
+
+.mobile-switcher-card:last-child {
+	margin-inline-end: 0;
+}
+
+.mobile-switcher-card:nth-child(odd) {
+	transform: rotate(-1.1deg);
+}
+
+.mobile-switcher-card:nth-child(even) {
+	transform: rotate(1.1deg);
+}
+
+.mobile-switcher-card-frame {
+	flex: 1;
+	width: 100%;
+	border: none;
+	padding: 0;
+	border-radius: 1.9rem;
+	background: transparent;
+	box-shadow: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	cursor: pointer;
+	text-align: left;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.mobile-switcher-card:hover,
+.mobile-switcher-card:focus-within {
+	z-index: 2;
+}
+
+.mobile-switcher-card-topbar {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.mobile-switcher-app-meta {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-width: 0;
+}
+
+.mobile-switcher-app-copy {
+	min-width: 0;
+}
+
+.mobile-switcher-app-label,
+.mobile-switcher-app-state,
+.mobile-switcher-preview-title,
+.mobile-switcher-preview-copy {
+	margin: 0;
+}
+
+.mobile-switcher-app-label {
+	font-size: var(--text-sm);
+	font-weight: 700;
+	color: var(--color-ink);
+}
+
+.mobile-switcher-app-state {
+	margin-top: 0.15rem;
+	font-size: var(--text-2xs);
+	color: var(--color-ink-soft);
+}
+
+.mobile-switcher-preview-pill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 1.65rem;
+	padding: 0 0.6rem;
+	border-radius: var(--radius-pill);
+	background: linear-gradient(135deg, rgba(237, 109, 75, 0.92), rgba(241, 146, 73, 0.92));
+	color: white;
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.mobile-switcher-preview-body {
+	flex: 1;
+	display: flex;
+	min-height: 0;
+}
+
+.mobile-switcher-preview-window {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	border-radius: 1.9rem;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0)),
+		linear-gradient(180deg, #f3d992 0%, #efc778 100%);
+	border: var(--border-thin) solid rgba(255, 255, 255, 0.32);
+	overflow: hidden;
+	min-height: 0;
+	box-shadow:
+		0 1.5rem 2.8rem rgba(90, 61, 43, 0.22),
+		inset 0 0 0 0.0625rem rgba(255, 255, 255, 0.14);
+}
+
+.mobile-switcher-preview-status {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+	padding: 0.95rem 1.1rem 0.7rem;
+	color: rgba(90, 61, 43, 0.86);
+	font-family: var(--font-display);
+	font-size: 0.86rem;
+	font-weight: 700;
+}
+
+.mobile-switcher-preview-time {
+	line-height: 1;
+}
+
+.mobile-switcher-preview-status-icons {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.mobile-switcher-preview-wifi {
+	width: 0.95rem;
+	height: 0.95rem;
+	object-fit: contain;
+}
+
+.mobile-switcher-preview-battery {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.12rem;
+}
+
+.mobile-switcher-preview-battery-body {
+	width: 1.32rem;
+	height: 0.72rem;
+	padding: 0.1rem;
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.58);
+	border-radius: 0.28rem;
+	background: rgba(255, 249, 241, 0.46);
+	box-sizing: border-box;
+}
+
+.mobile-switcher-preview-battery-fill {
+	width: 82%;
+	height: 100%;
+	border-radius: 0.14rem;
+	background: linear-gradient(135deg, var(--color-accent-red), var(--color-accent-orange));
+}
+
+.mobile-switcher-preview-battery-cap {
+	width: 0.16rem;
+	height: 0.38rem;
+	border-radius: 0.12rem;
+	background: rgba(90, 61, 43, 0.56);
+}
+
+.mobile-switcher-preview-window-title {
+	margin: 0;
+	font-size: var(--text-xs);
+	font-weight: 700;
+	color: var(--color-ink-soft);
+}
+
+.mobile-switcher-preview-window-body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	padding: 0.2rem 1rem 1rem;
+}
+
+.mobile-switcher-preview-surface {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border-radius: 1.45rem;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.14)),
+		rgba(255, 249, 241, 0.92);
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
+	box-shadow: 0 1rem 1.7rem rgba(90, 61, 43, 0.1);
+	overflow: hidden;
+}
+
+.mobile-switcher-preview-surface-header {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	padding: 0.8rem 1rem;
+	background: rgba(255, 255, 255, 0.4);
+	border-bottom: var(--border-thin) solid rgba(90, 61, 43, 0.08);
+}
+
+.mobile-switcher-preview-dot {
+	width: 0.55rem;
+	height: 0.55rem;
+	border-radius: 50%;
+	background: var(--color-accent-red);
+}
+
+.mobile-switcher-preview-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: var(--space-2);
+	padding: 1.15rem;
+}
+
+.mobile-switcher-preview-eyebrow {
+	margin: 0;
+	font-family: var(--font-chrome);
+	font-size: var(--text-2xs);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--color-ink-soft);
+}
+
+.mobile-switcher-preview-title {
+	font-family: var(--font-display);
+	font-size: clamp(1.4rem, 4.2vw, 1.8rem);
+	font-weight: 700;
+	line-height: var(--line-tight);
+	color: var(--color-ink);
+}
+
+.mobile-switcher-preview-copy {
+	font-size: var(--text-sm);
+	line-height: var(--line-loose);
+	color: var(--color-ink-soft);
+}
+
+.mobile-switcher-preview-home {
+	align-self: center;
+	width: 7rem;
+	height: 0.32rem;
+	border-radius: var(--radius-pill);
+	background: rgba(90, 61, 43, 0.26);
+	margin-top: auto;
+}
+
+.mobile-switcher-close {
+	align-self: center;
+	min-height: 2.15rem;
+	padding: 0.45rem 1rem;
+	border: var(--border-thin) solid rgba(255, 255, 255, 0.34);
+	border-radius: var(--radius-pill);
+	background: rgba(255, 249, 241, 0.72);
+	color: var(--color-ink);
+	font-size: var(--text-2xs);
+	font-weight: 700;
+	cursor: pointer;
+	box-shadow: 0 0.7rem 1.2rem rgba(90, 61, 43, 0.12);
+}
+
+.mobile-switcher-fade-enter-active,
+.mobile-switcher-fade-leave-active {
+	transition: opacity 180ms ease;
+}
+
+.mobile-switcher-fade-enter-active .mobile-switcher-sheet,
+.mobile-switcher-fade-leave-active .mobile-switcher-sheet {
+	transition: transform 220ms ease;
+}
+
+.mobile-switcher-fade-enter-from,
+.mobile-switcher-fade-leave-to {
+	opacity: 0;
+}
+
+.mobile-switcher-fade-enter-from .mobile-switcher-sheet,
+.mobile-switcher-fade-leave-to .mobile-switcher-sheet {
+	transform: translateY(1.5rem);
 }
 </style>
