@@ -1,26 +1,19 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { desktopApps } from "../data/DesktopApps";
 import calendarDockIcon from "../assets/mobile-icons/calendar-icon.gif";
 import messagesDockIcon from "../assets/mobile-icons/messages-icon.png";
 import photosDockIcon from "../assets/mobile-icons/photos-icon.png";
 import settingsDockIcon from "../assets/mobile-icons/settings-icon.png";
 import wifiIcon from "../assets/mobile-icons/wifi-icon.svg";
+import { useWorkspaceState } from "../composables/useWorkspaceState";
 
-const activeAppId = ref<string | null>(null);
+const { workspaceState, openMobileApp, closeMobileApp, switchMobileApp } = useWorkspaceState();
 
 const currentTime = computed(() =>
 	new Intl.DateTimeFormat("en-US", {
 		hour: "numeric",
 		minute: "2-digit",
-	}).format(new Date()),
-);
-
-const currentDay = computed(() =>
-	new Intl.DateTimeFormat("en-US", {
-		weekday: "long",
-		month: "long",
-		day: "numeric",
 	}).format(new Date()),
 );
 
@@ -31,21 +24,17 @@ const dockApps = [
 	{ id: "settings", label: "Settings", icon: settingsDockIcon },
 ];
 
-function openApp(id: string) {
-	activeAppId.value = id;
-}
+const activeApp = computed(() =>
+	workspaceState.mobile.activeAppId
+		? desktopApps.find(app => app.id === workspaceState.mobile.activeAppId) ?? null
+		: null,
+);
 
-function closeApp() {
-	activeAppId.value = null;
-}
-
-function getAppLabel(id: string | null) {
-	if (!id) {
-		return "";
-	}
-
-	return desktopApps.find(app => app.id === id)?.label ?? id;
-}
+const recentApps = computed(() =>
+	workspaceState.mobile.recentAppIds
+		.map(id => desktopApps.find(app => app.id === id))
+		.filter((app): app is (typeof desktopApps)[number] => Boolean(app)),
+);
 </script>
 
 <template>
@@ -63,23 +52,46 @@ function getAppLabel(id: string | null) {
 			</div>
 		</div>
 
-		<div v-if="!activeAppId" class="mobile-home-screen">
-			<!-- <div class="mobile-hero">
+		<div v-if="!activeApp" class="mobile-home-screen">
+			<div class="mobile-hero">
 				<div class="mobile-hero-copy">
 					<p class="mobile-kicker">Home Screen</p>
 					<h1 class="mobile-title">jsOS Mobile</h1>
-					<p class="mobile-subtitle">{{ currentDay }}</p>
+					<p class="mobile-subtitle">
+						{{ new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date()) }}
+					</p>
 				</div>
 
 				<div class="mobile-widget">
 					<p class="mobile-widget-label">Workspace</p>
-					<p class="mobile-widget-value">6 apps ready</p>
-					<p class="mobile-widget-copy">Tap any icon to open its mobile placeholder view.</p>
+					<p class="mobile-widget-value">{{ recentApps.length || desktopApps.length }} apps ready</p>
+					<p class="mobile-widget-copy">
+						Desktop windows and mobile app sessions now stay in memory when the shell switches between desktop and mobile layouts.
+					</p>
 				</div>
-			</div> -->
+			</div>
+
+			<div v-if="recentApps.length" class="mobile-recents">
+				<div class="mobile-recents-header">
+					<p class="mobile-kicker">Recent Apps</p>
+					<span class="status-pill">{{ recentApps.length }} tracked</span>
+				</div>
+
+				<div class="mobile-recent-list">
+					<button
+						v-for="app in recentApps"
+						:key="`recent-${app.id}`"
+						class="mobile-recent-button"
+						type="button"
+						@click="switchMobileApp(app.id)">
+						<img class="mobile-recent-icon" :src="app.icon" :alt="`${app.label} icon`" />
+						<span class="mobile-recent-label">{{ app.label }}</span>
+					</button>
+				</div>
+			</div>
 
 			<div class="mobile-app-grid">
-				<button v-for="app in desktopApps" :key="app.id" class="mobile-app-button" type="button" @click="openApp(app.id)">
+				<button v-for="app in desktopApps" :key="app.id" class="mobile-app-button" type="button" @click="openMobileApp(app.id)">
 					<div class="mobile-app-icon-shell">
 						<img class="mobile-app-icon" :src="app.icon" :alt="`${app.label} icon`" />
 					</div>
@@ -98,19 +110,33 @@ function getAppLabel(id: string | null) {
 
 		<div v-else class="mobile-app-view">
 			<div class="mobile-app-header">
-				<button class="mobile-back-button" type="button" @click="closeApp">Back</button>
+				<button class="mobile-back-button" type="button" @click="closeMobileApp">Home</button>
 				<div class="mobile-app-header-copy">
 					<p class="mobile-kicker">App Preview</p>
-					<h2 class="mobile-app-title">{{ getAppLabel(activeAppId) }}</h2>
+					<h2 class="mobile-app-title">{{ activeApp?.label }}</h2>
 				</div>
+			</div>
+
+			<div v-if="recentApps.length > 1" class="mobile-app-switcher">
+				<button
+					v-for="app in recentApps"
+					:key="`switch-${app.id}`"
+					class="mobile-switch-pill"
+					:class="{ 'is-active': app.id === activeApp?.id }"
+					type="button"
+					@click="switchMobileApp(app.id)">
+					{{ app.label }}
+				</button>
 			</div>
 
 			<div class="mobile-app-card">
 				<div class="mobile-app-card-header">
 					<div class="mobile-app-card-dot"></div>
-					<p class="mobile-app-card-title">{{ getAppLabel(activeAppId) }}</p>
+					<p class="mobile-app-card-title">{{ activeApp?.label }}</p>
 				</div>
-				<p class="mobile-app-copy">This is the placeholder mobile view for {{ getAppLabel(activeAppId) }}. The next step is wiring each app into a mobile-specific full-screen experience.</p>
+				<p class="mobile-app-copy">
+					This is the placeholder mobile view for {{ activeApp?.label }}. Returning home does not clear the app session, so you can switch breakpoints or reopen it from the recent-app strip without losing state.
+				</p>
 			</div>
 
 			<div class="home-indicator" aria-hidden="true"></div>
@@ -312,6 +338,60 @@ function getAppLabel(id: string | null) {
 	align-content: start;
 }
 
+.mobile-recents {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	margin-bottom: var(--space-4);
+}
+
+.mobile-recents-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2);
+}
+
+.mobile-recent-list {
+	display: flex;
+	gap: var(--space-2);
+	overflow-x: auto;
+	padding-bottom: 0.1rem;
+	scrollbar-width: none;
+}
+
+.mobile-recent-list::-webkit-scrollbar {
+	display: none;
+}
+
+.mobile-recent-button {
+	flex: 0 0 5.25rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.65rem 0.5rem;
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
+	border-radius: 1.15rem;
+	background: rgba(255, 249, 241, 0.7);
+	box-shadow: 0 0.65rem 1.1rem rgba(90, 61, 43, 0.08);
+	color: var(--color-ink);
+	cursor: pointer;
+}
+
+.mobile-recent-icon {
+	width: 2rem;
+	height: 2rem;
+	object-fit: contain;
+}
+
+.mobile-recent-label {
+	font-size: 0.72rem;
+	font-weight: 600;
+	line-height: 1.2;
+	text-align: center;
+}
+
 .mobile-app-button {
 	display: flex;
 	flex-direction: column;
@@ -401,6 +481,36 @@ function getAppLabel(id: string | null) {
 
 .mobile-app-view {
 	gap: var(--space-4);
+}
+
+.mobile-app-switcher {
+	display: flex;
+	gap: var(--space-2);
+	overflow-x: auto;
+	padding-bottom: 0.1rem;
+	scrollbar-width: none;
+}
+
+.mobile-app-switcher::-webkit-scrollbar {
+	display: none;
+}
+
+.mobile-switch-pill {
+	flex: 0 0 auto;
+	min-height: 2rem;
+	padding: 0.35rem 0.8rem;
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
+	border-radius: var(--radius-pill);
+	background: rgba(255, 249, 241, 0.74);
+	color: var(--color-ink-soft);
+	font-size: var(--text-2xs);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.mobile-switch-pill.is-active {
+	background: linear-gradient(135deg, rgba(237, 109, 75, 0.95), rgba(241, 146, 73, 0.95));
+	color: white;
 }
 
 .mobile-app-header {
