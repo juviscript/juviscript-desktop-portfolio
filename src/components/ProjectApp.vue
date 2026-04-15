@@ -15,30 +15,24 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 
 <template>
 	<div v-if="selectedProject" class="project-container">
-		<div class="project-left-container">
-			<img v-if="selectedProject.gif" :src="selectedProject.gif" :alt="`${selectedProject.name} preview`" class="project-preview" />
-			<div v-else class="project-preview-placeholder">Preview not available</div>
+		<div class="project-top-container">
+			<img v-if="selectedProject.gif" :src="selectedProject.gif" :alt="`${selectedProject.name} preview`" class="project-preview-image" />
+			<div v-else class="project-preview-image-placeholder">Preview not available</div>
 		</div>
-		<div class="project-right-container">
-			<h1 class="project-title">{{ selectedProject.name }}</h1>
-			<div class="technologies-badges-container">
-				<span v-for="technology in selectedProject.technologies" :key="technology" class="technology-badge">{{ technology }}</span>
+		<div class="project-bottom-container">
+			<div>
+				<h1 class="project-title">{{ selectedProject.name }}</h1>
+				<div class="technologies-badges-container">
+					<span v-for="technology in selectedProject.technologies" :key="technology" class="technology-badge">{{ technology }}</span>
+				</div>
 			</div>
+
 			<div class="project-description">
 				<p>{{ selectedProject.description }}</p>
 			</div>
 
 			<div class="project-quick-links">
-				<a
-					v-if="selectedProject.url"
-					:href="selectedProject.url"
-					target="_blank"
-					rel="noopener"
-					class="project-link"
-					@click.prevent="emit('open-url', selectedProject.id, selectedProject.url, selectedProject.name)"
-				>
-					Preview Project
-				</a>
+				<a v-if="selectedProject.url" :href="selectedProject.url" target="_blank" rel="noopener" class="project-link" @click.prevent="emit('open-url', selectedProject.id, selectedProject.url, selectedProject.name)"> Preview Project </a>
 				<a v-if="selectedProject.repositoryUrl" :href="selectedProject.repositoryUrl" target="_blank" rel="noopener" class="project-link">View Repository</a>
 			</div>
 		</div>
@@ -50,8 +44,8 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 
 <style scoped>
 .project-container {
-	display: grid;
-	grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+	display: flex;
+	flex-direction: column;
 	width: 100%;
 	height: 100%;
 	gap: 1rem;
@@ -59,36 +53,35 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 	box-sizing: border-box;
 }
 
-.project-left-container {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background-color: #f4f4f4;
-	border: 1px solid #c0c0c0;
-	padding: 1rem;
+.project-top-container {
+	text-align: center;
+	margin: auto;
+	flex-grow: 1;
 }
 
-.project-right-container {
+.project-bottom-container {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 0.5rem;
+	padding: 1rem;
+	border-radius: var(--radius-lg);
+	background-color: var(--color-surface-strong);
 }
 
-.project-preview {
+.project-preview-image {
 	max-width: 100%;
 	max-height: 100%;
 	object-fit: contain;
+	border-radius: var(--radius-md);
 }
 
-.project-preview-placeholder {
+.project-preview-image-placeholder {
 	width: 100%;
 	height: 100%;
 	min-height: 240px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #666;
-	background: repeating-linear-gradient(45deg, #e9e9e9, #e9e9e9 12px, #f7f7f7 12px, #f7f7f7 24px);
 }
 
 .project-title {
@@ -99,13 +92,16 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
+    margin-top: .25rem;
 }
 
 .technology-badge {
 	padding: 0.25rem 0.5rem;
-	border: 1px solid #999;
-	background-color: #efefef;
-	font-size: 0.85rem;
+	background-color: var(--color-accent-red);
+	font-size: 0.75rem;
+    font-weight: bold;
+	border-radius: var(--radius-pill);
+	color: white;
 }
 
 .project-description {
@@ -119,8 +115,12 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 }
 
 .project-link {
-	color: #0055aa;
+	color: var(--color);
+	font-weight: bold;
 	text-decoration: none;
+	padding: 0.5rem 0.75rem;
+	background-color: var(--color-accent-sky);
+	border-radius: var(--radius-sm);
 }
 
 .project-link:hover {
@@ -134,5 +134,4 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 	width: 100%;
 	height: 100%;
 }
-
 </style>

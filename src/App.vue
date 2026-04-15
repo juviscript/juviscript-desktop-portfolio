@@ -1,86 +1,104 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import BootSequence from "./components/BootSequence.vue";
-import Desktop from "./components/Desktop.vue";
+import DesktopWorkspace from "./components/DesktopWorkspace.vue";
+import MobileWorkspace from "./components/MobileWorkspace.vue";
+import MobileBootSequence from "./components/MobileBootSequence.vue";
 
 const bootComplete = ref(false);
+const isMobile = ref(false);
 
-const handleBootComplete = () => {
+let mediaQuery: MediaQueryList | null = null;
+
+function handleBootComplete() {
 	bootComplete.value = true;
-};
+}
+
+function updateViewportMode() {
+	if (!mediaQuery) {
+		return;
+	}
+
+	isMobile.value = mediaQuery.matches;
+}
+
+onMounted(() => {
+	mediaQuery = window.matchMedia("(max-width: 68rem)");
+	updateViewportMode();
+	mediaQuery.addEventListener("change", updateViewportMode);
+});
+
+onUnmounted(() => {
+	mediaQuery?.removeEventListener("change", updateViewportMode);
+});
 </script>
 
 <template>
-	<div class="monitor-frame">
-		<div class="app">
+	<div v-if="isMobile" class="phone-frame">
+		<div class="frame-content">
+			<MobileBootSequence v-if="!bootComplete" @complete="handleBootComplete" />
+			<MobileWorkspace v-else />
+		</div>
+	</div>
+
+	<div v-else class="monitor-frame">
+		<div class="frame-content">
 			<BootSequence v-if="!bootComplete" @complete="handleBootComplete" />
-			<Desktop v-if="bootComplete" />
+			<DesktopWorkspace v-else />
 		</div>
 	</div>
 </template>
 
 <style scoped>
+.monitor-frame,
+.phone-frame {
+	background: linear-gradient(160deg, var(--color-frame-top) 0%, var(--color-frame-bottom) 100%);
+	border: var(--border-thin) solid rgba(255, 255, 255, 0.65);
+	box-shadow: var(--shadow-shell);
+	position: relative;
+}
+
+.monitor-frame::before,
+.phone-frame::before {
+	content: "";
+	position: absolute;
+	border: var(--border-thin) solid rgba(255, 255, 255, 0.35);
+	pointer-events: none;
+}
+
 .monitor-frame {
-  width: min(calc(100vw - 48px), 1880px, calc((100vh - 48px) * 16 / 9));
-  aspect-ratio: 16 / 9;
-  padding: 22px;
-  border-radius: 24px;
-  background:
-    linear-gradient(145deg, #6a4a35 0%, #4a3224 45%, #2f2119 100%);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.45),
-    inset 2px 2px 0 rgba(255, 236, 180, 0.18),
-    inset -3px -3px 0 rgba(0, 0, 0, 0.28);
-  position: relative;
+	width: min(calc(100vw - 3rem), 112rem, calc((100vh - 3rem) * 16 / 9));
+	aspect-ratio: 16 / 9;
+	padding: var(--space-4);
+	border-radius: var(--radius-2xl);
 }
 
 .monitor-frame::before {
-  content: "";
-  position: absolute;
-  inset: 14px;
-  border-radius: 16px;
-  border: 2px solid rgba(255, 236, 180, 0.22);
-  pointer-events: none;
+	inset: var(--space-3);
+	border-radius: calc(var(--radius-2xl) - var(--space-2));
 }
 
-.app {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #75c8ae;
-  box-shadow:
-    inset 0 0 0 2px rgba(90, 61, 43, 0.45),
-    inset 0 0 40px rgba(255, 236, 180, 0.08);
+.phone-frame {
+	width: calc(100vw - 0.75rem);
+	height: calc(100vh - 0.75rem);
+	padding: 0.35rem;
+	border-radius: 1.75rem;
 }
 
-.app::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at center, transparent 55%, rgba(0, 0, 0, 0.12) 100%);
-  pointer-events: none;
-  z-index: 20;
+.phone-frame::before {
+	inset: 0.25rem;
+	border-radius: 1.45rem;
 }
 
-.app::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.03) 0,
-      rgba(255, 255, 255, 0.03) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-  opacity: 0.18;
-  pointer-events: none;
-  mix-blend-mode: soft-light;
-  z-index: 21;
+.frame-content {
+	width: 100%;
+	height: 100%;
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--radius-xl);
+	background: linear-gradient(180deg, #fff6ea 0%, #f7e2cc 100%);
+	box-shadow:
+		inset 0 0 0 var(--border-thin) rgba(90, 61, 43, 0.12),
+		inset 0 1rem 2rem rgba(255, 255, 255, 0.3);
 }
-
 </style>

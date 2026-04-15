@@ -2,16 +2,16 @@
 import { ref } from "vue";
 import DesktopIcon from "./DesktopIcon.vue";
 import Taskbar from "./Taskbar.vue";
-import Window from "./Window.vue";
-import FileExplorer from "./FileExplorer.vue";
+import AppWindow from "./AppWindow.vue";
+import ExplorerApp from "./ExplorerApp.vue";
 import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
-import WebBrowser from "./WebBrowser.vue";
-import ProjectsWindow from "./ProjectsWindow.vue";
-import AboutWindow from "./AboutWindow.vue";
+import BrowserApp from "./BrowserApp.vue";
+import ProjectApp from "./ProjectApp.vue";
+import AboutApp from "./AboutApp.vue";
 
 import { projects } from "../data/Projects";
 import { desktopApps, type DesktopApp } from "../data/DesktopApps";
-import ContactWindow from "./ContactWindow.vue";
+import ContactApp from "./ContactApp.vue";
 
 type OpenWindow = DesktopApp & {
 	isMinimized: boolean;
@@ -202,7 +202,9 @@ function openProjectsWindow(projectId: string) {
 			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :label="app.label" :icon="app.icon" @open="openApp" />
 		</div>
 
-		<Window
+		<a class="icons-attribution" href="https://icons8.com" target="_blank" rel="noopener noreferrer">Icons by Icons8</a>
+
+		<AppWindow
 			v-for="app in openWindows"
 			v-show="!app.isMinimized"
 			:key="app.id"
@@ -215,16 +217,16 @@ function openProjectsWindow(projectId: string) {
 			@minimize="minimizeApp"
 			@focus="focusApp">
 
-			<WebBrowser v-if="app.id === 'resume'" url="https://www.juviscript.dev/resume" :objectUrl="resumePdf" :isPdf="true" />
-			<WebBrowser v-else-if="app.windowType === 'browser'" :url="app.url || ''" :objectUrl="app.objectUrl" :isPdf="app.isPdf || false" />
-			<FileExplorer v-else-if="app.id === 'certifications'" id="certifications" url="C:\Users\Juvilane\Certifications" @open-file="openBrowserWindow" />
-			<FileExplorer v-else-if="app.id === 'projects'" id="projects" url="C:\Users\Juvilane\Projects" @open-project="openProjectsWindow" />
-			<ProjectsWindow v-else-if="app.windowType === 'project' && app.projectId" :project-id="app.projectId" @open-url="openProjectBrowserWindow"/>
-            <AboutWindow v-else-if="app.id === 'about'" />
-            <ContactWindow v-else-if="app.id === 'contact'" />
+			<BrowserApp v-if="app.id === 'resume'" url="https://www.juviscript.dev/resume" :objectUrl="resumePdf" :isPdf="true" />
+			<BrowserApp v-else-if="app.windowType === 'browser'" :url="app.url || ''" :objectUrl="app.objectUrl" :isPdf="app.isPdf || false" />
+			<ExplorerApp v-else-if="app.id === 'certifications'" id="certifications" url="C:\Users\Juvilane\Certifications" @open-file="openBrowserWindow" />
+			<ExplorerApp v-else-if="app.id === 'projects'" id="projects" url="C:\Users\Juvilane\Projects" @open-project="openProjectsWindow" />
+			<ProjectApp v-else-if="app.windowType === 'project' && app.projectId" :project-id="app.projectId" @open-url="openProjectBrowserWindow"/>
+            <AboutApp v-else-if="app.id === 'about'" />
+            <ContactApp v-else-if="app.id === 'contact'" />
             
 			<p v-else-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
-		</Window>
+		</AppWindow>
 
 		<Taskbar :windows="openWindows" @select-window="handleTaskbarIconClick" />
 	</div>
@@ -234,21 +236,79 @@ function openProjectsWindow(projectId: string) {
 .desktop {
 	width: 100%;
 	height: 100%;
-background-image: url("../assets/Windows XP Background - Hill with Blue Sky - 8-bit.jpg");
-background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;	
-overflow: hidden;
+	background-color: #edc37a;
+	background-image:
+		linear-gradient(
+			45deg,
+			rgba(255, 246, 220, 0.18) 25%,
+			transparent 25%,
+			transparent 75%,
+			rgba(255, 246, 220, 0.18) 75%,
+			rgba(255, 246, 220, 0.18)
+		),
+		linear-gradient(
+			45deg,
+			rgba(255, 246, 220, 0.18) 25%,
+			transparent 25%,
+			transparent 75%,
+			rgba(255, 246, 220, 0.18) 75%,
+			rgba(255, 246, 220, 0.18)
+		),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%);
+	background-size:
+		3rem 3rem,
+		3rem 3rem,
+		auto;
+	background-position:
+		0 0,
+		1.5rem 1.5rem,
+		center;
+	overflow: hidden;
 	position: relative;
+}
+
+.desktop::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(rgba(255, 255, 255, 0.08) 0.0625rem, transparent 0.0625rem),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0.0625rem, transparent 0.0625rem);
+	background-size: 3rem 3rem;
+	opacity: 0.32;
+	pointer-events: none;
 }
 
 .icon-grid {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	padding: 12px 8px;
+	gap: var(--space-4);
+	padding: var(--space-5);
 	position: absolute;
 	top: 0;
 	left: 0;
+	z-index: 1;
+}
+
+.icons-attribution {
+	position: absolute;
+	right: var(--space-5);
+	bottom: 5.75rem;
+	padding: 0.4rem 0.8rem;
+	border-radius: var(--radius-pill);
+	background: rgba(255, 249, 241, 0.7);
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
+	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.08);
+	color: var(--color-ink-soft);
+	font-size: var(--text-2xs);
+	font-weight: 600;
+	text-decoration: none;
+	backdrop-filter: blur(0.5rem);
+	z-index: 2;
+}
+
+.icons-attribution:hover {
+	color: var(--color-ink);
+	background: rgba(255, 249, 241, 0.88);
 }
 </style>

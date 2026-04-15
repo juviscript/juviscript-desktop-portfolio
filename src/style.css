@@ -1,51 +1,119 @@
-@import url("https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Outfit:wght@500;600;700&family=VT323&display=swap");
 
 :root {
-	/* Brand */
-	--color-bg-main: #75c8ae;
 	--color-ink: #5a3d2b;
-	--color-surface: #ffecb4;
-	--color-surface-light: #fff4cf;
-	--color-accent: #e5771e;
-	--color-accent-2: #f4a127;
-	--color-border-dark: #442d20;
-	--color-mint-light: #9fdbc8;
+	--color-ink-soft: #846a58;
+	--color-outline: rgba(90, 61, 43, 0.78);
+	--color-outline-soft: rgba(90, 61, 43, 0.18);
+	--color-surface: #fff9f1;
+	--color-surface-strong: #fdf0dd;
+	--color-surface-muted: #f5e3d0;
+	--color-frame-top: #f7e3cf;
+	--color-frame-bottom: #efc5a2;
+	--color-wallpaper-top: #f7d08a;
+	--color-wallpaper-bottom: #ebb889;
+	--color-accent-red: #de6b48;
+	--color-accent-sky: #bfe9ff;
+	--color-accent-mint: #9bd6c4;
+	--color-accent-gold: #f4c86f;
+	--color-accent-orange: #e99e70;
+	--color-accent-apricot: #f2b07a;
+	--color-white: #ffffff;
+	--color-shadow: rgba(90, 61, 43, 0.18);
+	--color-shadow-strong: rgba(90, 61, 43, 0.28);
 
-	/* Typography */
 	--font-bios: "VT323", monospace;
-	--font-ui: "VT323", monospace;
-	--font-chrome: "Silkscreen", monospace;
+	--font-ui: "DM Sans", "Segoe UI", sans-serif;
+	--font-display: "Outfit", "DM Sans", sans-serif;
+	--font-chrome: "Outfit", "DM Sans", sans-serif;
 
-	--text-xs: 14px;
-	--text-sm: 16px;
-	--text-md: 20px;
-	--text-lg: 24px;
-	--text-xl: 32px;
+	--text-2xs: 0.6875rem;
+	--text-xs: 0.8125rem;
+	--text-sm: 0.9375rem;
+	--text-md: 1rem;
+	--text-lg: 1.125rem;
+	--text-xl: 1.5rem;
+	--text-2xl: 2rem;
 
+	--line-snug: 1.2;
 	--line-tight: 1.1;
 	--line-normal: 1.4;
 	--line-loose: 1.6;
+
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-4: 1rem;
+	--space-5: 1.5rem;
+	--space-6: 2rem;
+	--space-7: 2.5rem;
+	--space-8: 3rem;
+
+	--radius-sm: 0.5rem;
+	--radius-md: 0.875rem;
+	--radius-lg: 1.25rem;
+	--radius-xl: 1.75rem;
+	--radius-2xl: 2.25rem;
+	--radius-pill: 999rem;
+
+	--border-thin: 0.0625rem;
+	--border-medium: 0.125rem;
+
+	--shadow-card: 0 1.25rem 2.5rem var(--color-shadow);
+	--shadow-card-strong: 0 1.75rem 3.5rem var(--color-shadow-strong);
+	--shadow-shell: 0 1.5rem 3.75rem rgba(90, 61, 43, 0.22);
 }
 
 html,
 body,
 #app {
-  width: 100%;
-  height: 100%;
-  margin: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
 }
 
 body {
-  overflow: hidden;
-  background: var(--color-surface-light);
+	overflow: hidden;
+	background: linear-gradient(180deg, #fbf4ea 0%, #f3deca 100%);
+	color: var(--color-ink);
+	font-family: var(--font-ui);
+	font-size: var(--text-md);
+	line-height: var(--line-normal);
 }
 
 #app {
-  display: grid;
-  place-items: center;
+	display: grid;
+	place-items: center;
 }
-
 
 * {
 	box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+	font: inherit;
+}
+
+img {
+	display: block;
+	max-width: 100%;
+}
+
+.theme-mask-icon {
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+	flex-shrink: 0;
+	background-color: currentColor;
+	-webkit-mask-image: var(--icon-mask);
+	mask-image: var(--icon-mask);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: contain;
+	mask-size: contain;
 }
