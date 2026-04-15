@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import BootSequence from "./components/BootSequence.vue";
-import Desktop from "./components/Desktop.vue";
+import DesktopWorkspace from "./components/DesktopWorkspace.vue";
 
 const bootComplete = ref(false);
 
@@ -14,7 +14,7 @@ const handleBootComplete = () => {
 	<div class="monitor-frame">
 		<div class="app">
 			<BootSequence v-if="!bootComplete" @complete="handleBootComplete" />
-			<Desktop v-if="bootComplete" />
+			<DesktopWorkspace v-if="bootComplete" />
 		</div>
 	</div>
 </template>

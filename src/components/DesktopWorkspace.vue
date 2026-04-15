@@ -2,16 +2,16 @@
 import { ref } from "vue";
 import DesktopIcon from "./DesktopIcon.vue";
 import Taskbar from "./Taskbar.vue";
-import Window from "./Window.vue";
-import FileExplorer from "./FileExplorer.vue";
+import AppWindow from "./AppWindow.vue";
+import ExplorerApp from "./ExplorerApp.vue";
 import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
-import WebBrowser from "./WebBrowser.vue";
-import ProjectsWindow from "./ProjectsWindow.vue";
-import AboutWindow from "./AboutWindow.vue";
+import BrowserApp from "./BrowserApp.vue";
+import ProjectApp from "./ProjectApp.vue";
+import AboutApp from "./AboutApp.vue";
 
 import { projects } from "../data/Projects";
 import { desktopApps, type DesktopApp } from "../data/DesktopApps";
-import ContactWindow from "./ContactWindow.vue";
+import ContactApp from "./ContactApp.vue";
 
 type OpenWindow = DesktopApp & {
 	isMinimized: boolean;
@@ -204,7 +204,7 @@ function openProjectsWindow(projectId: string) {
 
 		<a class="icons-attribution" href="https://icons8.com" target="_blank" rel="noopener noreferrer">Icons by Icons8</a>
 
-		<Window
+		<AppWindow
 			v-for="app in openWindows"
 			v-show="!app.isMinimized"
 			:key="app.id"
@@ -217,16 +217,16 @@ function openProjectsWindow(projectId: string) {
 			@minimize="minimizeApp"
 			@focus="focusApp">
 
-			<WebBrowser v-if="app.id === 'resume'" url="https://www.juviscript.dev/resume" :objectUrl="resumePdf" :isPdf="true" />
-			<WebBrowser v-else-if="app.windowType === 'browser'" :url="app.url || ''" :objectUrl="app.objectUrl" :isPdf="app.isPdf || false" />
-			<FileExplorer v-else-if="app.id === 'certifications'" id="certifications" url="C:\Users\Juvilane\Certifications" @open-file="openBrowserWindow" />
-			<FileExplorer v-else-if="app.id === 'projects'" id="projects" url="C:\Users\Juvilane\Projects" @open-project="openProjectsWindow" />
-			<ProjectsWindow v-else-if="app.windowType === 'project' && app.projectId" :project-id="app.projectId" @open-url="openProjectBrowserWindow"/>
-            <AboutWindow v-else-if="app.id === 'about'" />
-            <ContactWindow v-else-if="app.id === 'contact'" />
+			<BrowserApp v-if="app.id === 'resume'" url="https://www.juviscript.dev/resume" :objectUrl="resumePdf" :isPdf="true" />
+			<BrowserApp v-else-if="app.windowType === 'browser'" :url="app.url || ''" :objectUrl="app.objectUrl" :isPdf="app.isPdf || false" />
+			<ExplorerApp v-else-if="app.id === 'certifications'" id="certifications" url="C:\Users\Juvilane\Certifications" @open-file="openBrowserWindow" />
+			<ExplorerApp v-else-if="app.id === 'projects'" id="projects" url="C:\Users\Juvilane\Projects" @open-project="openProjectsWindow" />
+			<ProjectApp v-else-if="app.windowType === 'project' && app.projectId" :project-id="app.projectId" @open-url="openProjectBrowserWindow"/>
+            <AboutApp v-else-if="app.id === 'about'" />
+            <ContactApp v-else-if="app.id === 'contact'" />
             
 			<p v-else-if="app.id === 'recycle-bin'">The Recycle Bin is empty.</p>
-		</Window>
+		</AppWindow>
 
 		<Taskbar :windows="openWindows" @select-window="handleTaskbarIconClick" />
 	</div>
