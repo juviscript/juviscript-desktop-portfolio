@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { desktopApps } from "../../data/DesktopApps";
 import resumePdf from "../../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
 import calendarDockIcon from "../../assets/mobile-icons/calendar-icon.gif";
@@ -45,6 +45,9 @@ const dockApps = [
 ];
 
 const isAppSwitcherOpen = ref(false);
+const switcherPreviewIndex = ref(0);
+const switcherCarousel = ref<HTMLElement | null>(null);
+let switcherScrollFrame: number | null = null;
 
 const activeApp = computed(() =>
 	workspaceState.mobile.activeAppId
@@ -149,7 +152,16 @@ function openAppSwitcher() {
 		return;
 	}
 
+	const activeIndex = activeApp.value
+		? recentApps.value.findIndex(app => app.id === activeApp.value?.id)
+		: 0;
+
+	switcherPreviewIndex.value = activeIndex >= 0 ? activeIndex : 0;
 	isAppSwitcherOpen.value = true;
+
+	nextTick(() => {
+		scrollSwitcherToIndex(switcherPreviewIndex.value);
+	});
 }
 
 function closeAppSwitcher() {
@@ -164,10 +176,92 @@ function selectAppFromSwitcher(id: string) {
 function closeAppFromSwitcher(id: string) {
 	closeMobileAppById(id);
 
-	if (recentApps.value.length <= 1) {
-		closeAppSwitcher();
-	}
+	nextTick(() => {
+		if (!recentApps.value.length) {
+			switcherPreviewIndex.value = 0;
+			closeAppSwitcher();
+			return;
+		}
+
+		const nextIndex = Math.min(switcherPreviewIndex.value, recentApps.value.length - 1);
+		scrollSwitcherToIndex(Math.max(nextIndex, 0));
+	});
 }
+
+function scrollSwitcherToIndex(index: number, behavior: ScrollBehavior = "auto") {
+	const carousel = switcherCarousel.value;
+
+	if (!carousel) {
+		return;
+	}
+
+	const targetCard = carousel.children[index] as HTMLElement | undefined;
+
+	if (!targetCard) {
+		return;
+	}
+
+	switcherPreviewIndex.value = index;
+	carousel.scrollTo({
+		left: targetCard.offsetLeft,
+		behavior,
+	});
+}
+
+function syncSwitcherPreviewIndex() {
+	const carousel = switcherCarousel.value;
+
+	if (!carousel) {
+		return;
+	}
+
+	const cards = Array.from(carousel.children) as HTMLElement[];
+
+	if (!cards.length) {
+		switcherPreviewIndex.value = 0;
+		return;
+	}
+
+	let closestIndex = 0;
+	let closestDistance = Number.POSITIVE_INFINITY;
+
+	cards.forEach((card, index) => {
+		const distance = Math.abs(card.offsetLeft - carousel.scrollLeft);
+
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			closestIndex = index;
+		}
+	});
+
+	switcherPreviewIndex.value = closestIndex;
+}
+
+function handleSwitcherScroll() {
+	if (switcherScrollFrame !== null) {
+		window.cancelAnimationFrame(switcherScrollFrame);
+	}
+
+	switcherScrollFrame = window.requestAnimationFrame(() => {
+		syncSwitcherPreviewIndex();
+		switcherScrollFrame = null;
+	});
+}
+
+function getSwitcherCardStyle(index: number) {
+	const distanceFromPreview = Math.abs(index - switcherPreviewIndex.value);
+
+	return {
+		zIndex: String(recentApps.value.length + 10 - distanceFromPreview),
+		transform: `translateY(${Math.min(distanceFromPreview, 4) * 0.28}rem) scale(${index === switcherPreviewIndex.value ? 1 : 0.97})`,
+	};
+}
+
+onBeforeUnmount(() => {
+	if (switcherScrollFrame !== null) {
+		window.cancelAnimationFrame(switcherScrollFrame);
+	}
+});
 
 function handleMobileHome() {
 	if (activeApp.value) {
@@ -260,12 +354,14 @@ function handleMobileApps() {
 					v-else-if="activeApp?.id === 'certifications'"
 					id="certifications"
 					url="jsOS:/certifications"
+					interactionMode="single"
 					@open-file="handleMobileOpenCertification" />
 
 				<ExplorerApp
 					v-else-if="activeApp?.id === 'projects'"
 					id="projects"
 					url="jsOS:/projects"
+					interactionMode="single"
 					@open-project="handleMobileOpenProject" />
 
 				<AboutApp v-else-if="activeApp?.id === 'about'" />
@@ -311,11 +407,13 @@ function handleMobileApps() {
 						<button class="mobile-switcher-done" type="button" @click="closeAppSwitcher">Done</button>
 					</div>
 
-					<div class="mobile-switcher-carousel">
+					<div ref="switcherCarousel" class="mobile-switcher-carousel" @scroll="handleSwitcherScroll">
 						<article
-							v-for="app in recentApps"
+							v-for="(app, index) in recentApps"
 							:key="`preview-${app.id}`"
-							class="mobile-switcher-card">
+							class="mobile-switcher-card"
+							:class="{ 'mobile-switcher-card--active-preview': index === switcherPreviewIndex }"
+							:style="getSwitcherCardStyle(index)">
 							<button class="mobile-switcher-card-frame" type="button" @click="selectAppFromSwitcher(app.id)">
 								<div class="mobile-switcher-preview-body">
 									<div class="mobile-switcher-preview-window">
@@ -348,9 +446,70 @@ function handleMobileApps() {
 													<p class="mobile-switcher-preview-window-title">{{ app.label }}</p>
 												</div>
 												<div class="mobile-switcher-preview-content">
-													<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
-													<p class="mobile-switcher-preview-title">{{ app.label }}</p>
-													<p class="mobile-switcher-preview-copy">{{ getAppPreviewCopy(app.id) }}</p>
+													<template v-if="app.id === 'about'">
+														<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
+														<p class="mobile-switcher-preview-title">Juvilane Panaguiton</p>
+														<p class="mobile-switcher-preview-copy">Full-Stack Developer</p>
+														<div class="mobile-switcher-preview-tag-row">
+															<span class="mobile-switcher-preview-tag">TypeScript</span>
+															<span class="mobile-switcher-preview-tag">Vue</span>
+															<span class="mobile-switcher-preview-tag">UX</span>
+														</div>
+														<div class="mobile-switcher-preview-card-block"></div>
+														<div class="mobile-switcher-preview-card-block mobile-switcher-preview-card-block--short"></div>
+													</template>
+
+													<template v-else-if="app.id === 'contact'">
+														<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
+														<p class="mobile-switcher-preview-title">{{ app.label }}</p>
+														<div class="mobile-switcher-preview-field"></div>
+														<div class="mobile-switcher-preview-field"></div>
+														<div class="mobile-switcher-preview-field mobile-switcher-preview-field--textarea"></div>
+														<div class="mobile-switcher-preview-button"></div>
+													</template>
+
+													<template v-else-if="app.id === 'projects'">
+														<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
+														<div class="mobile-switcher-preview-project-hero"></div>
+														<p class="mobile-switcher-preview-title">{{ app.label }}</p>
+														<div class="mobile-switcher-preview-tag-row">
+															<span class="mobile-switcher-preview-tag">Vue</span>
+															<span class="mobile-switcher-preview-tag">Cloudflare</span>
+														</div>
+														<div class="mobile-switcher-preview-link-row">
+															<div class="mobile-switcher-preview-link-pill"></div>
+															<div class="mobile-switcher-preview-link-pill mobile-switcher-preview-link-pill--muted"></div>
+														</div>
+													</template>
+
+													<template v-else-if="app.id === 'certifications'">
+														<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
+														<div class="mobile-switcher-preview-explorer">
+															<div class="mobile-switcher-preview-sidebar"></div>
+															<div class="mobile-switcher-preview-file-grid">
+																<span class="mobile-switcher-preview-file"></span>
+																<span class="mobile-switcher-preview-file"></span>
+																<span class="mobile-switcher-preview-file"></span>
+																<span class="mobile-switcher-preview-file"></span>
+															</div>
+														</div>
+													</template>
+
+													<template v-else-if="app.id === 'resume'">
+														<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
+														<div class="mobile-switcher-preview-browser-bar">
+															<div class="mobile-switcher-preview-browser-dot"></div>
+															<div class="mobile-switcher-preview-browser-dot"></div>
+															<div class="mobile-switcher-preview-browser-address"></div>
+														</div>
+														<div class="mobile-switcher-preview-document"></div>
+													</template>
+
+													<template v-else>
+														<p class="mobile-switcher-preview-eyebrow">{{ getAppPreviewEyebrow(app.id) }}</p>
+														<p class="mobile-switcher-preview-title">{{ app.label }}</p>
+														<p class="mobile-switcher-preview-copy">{{ getAppPreviewCopy(app.id) }}</p>
+													</template>
 												</div>
 											</div>
 
@@ -870,9 +1029,9 @@ function handleMobileApps() {
 	align-items: stretch;
 	gap: 0;
 	overflow-x: auto;
-	padding: 0 1rem 0.2rem 0.8rem;
+	padding: 0 1.4rem 0.35rem 0.8rem;
 	scroll-snap-type: x mandatory;
-	scroll-padding-inline: 1rem;
+	scroll-padding-inline: 0.8rem;
 	scrollbar-width: none;
 	flex: 1;
 	min-height: 0;
@@ -884,28 +1043,30 @@ function handleMobileApps() {
 }
 
 .mobile-switcher-card {
-	scroll-snap-align: center;
-	flex: 0 0 calc(100% - 3.5rem);
+	scroll-snap-align: start;
+	flex: 0 0 calc(100% - 4rem);
 	display: flex;
 	flex-direction: column;
 	gap: 0.7rem;
 	min-height: 0;
-	margin-inline-end: -18%;
 	position: relative;
-	z-index: 0;
 	transform-origin: center bottom;
+	transition:
+		transform 180ms ease,
+		filter 180ms ease,
+		opacity 180ms ease;
 }
 
-.mobile-switcher-card:last-child {
-	margin-inline-end: 0;
+.mobile-switcher-card + .mobile-switcher-card {
+	margin-inline-start: -24%;
 }
 
-.mobile-switcher-card:nth-child(odd) {
-	transform: rotate(-1.1deg);
+.mobile-switcher-card--active-preview {
+	filter: none;
 }
 
-.mobile-switcher-card:nth-child(even) {
-	transform: rotate(1.1deg);
+.mobile-switcher-card:not(.mobile-switcher-card--active-preview) {
+	filter: saturate(0.94);
 }
 
 .mobile-switcher-card-frame {
@@ -1111,7 +1272,6 @@ function handleMobileApps() {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
 	gap: var(--space-2);
 	padding: 1.15rem;
 }
@@ -1146,6 +1306,137 @@ function handleMobileApps() {
 	border-radius: var(--radius-pill);
 	background: rgba(90, 61, 43, 0.26);
 	margin-top: auto;
+}
+
+.mobile-switcher-preview-tag-row,
+.mobile-switcher-preview-link-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+}
+
+.mobile-switcher-preview-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.35rem 0.6rem;
+	border-radius: var(--radius-pill);
+	background: rgba(191, 233, 255, 0.42);
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.08);
+	color: var(--color-ink);
+	font-size: 0.68rem;
+	font-weight: 700;
+}
+
+.mobile-switcher-preview-card-block,
+.mobile-switcher-preview-field,
+.mobile-switcher-preview-button,
+.mobile-switcher-preview-link-pill,
+.mobile-switcher-preview-browser-address,
+.mobile-switcher-preview-document,
+.mobile-switcher-preview-project-hero,
+.mobile-switcher-preview-sidebar,
+.mobile-switcher-preview-file,
+.mobile-switcher-preview-browser-dot {
+	border-radius: var(--radius-md);
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.16)),
+		rgba(239, 213, 183, 0.92);
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.08);
+}
+
+.mobile-switcher-preview-card-block {
+	height: 4.5rem;
+}
+
+.mobile-switcher-preview-card-block--short {
+	height: 2.6rem;
+}
+
+.mobile-switcher-preview-field {
+	height: 2.5rem;
+}
+
+.mobile-switcher-preview-field--textarea {
+	height: 5.2rem;
+}
+
+.mobile-switcher-preview-button {
+	height: 2.7rem;
+	margin-top: auto;
+	background:
+		linear-gradient(135deg, rgba(222, 107, 72, 0.92), rgba(233, 158, 112, 0.92));
+	border-color: rgba(222, 107, 72, 0.18);
+}
+
+.mobile-switcher-preview-project-hero {
+	height: 6.2rem;
+	background:
+		linear-gradient(145deg, rgba(191, 233, 255, 0.42), rgba(255, 255, 255, 0.18)),
+		rgba(239, 213, 183, 0.92);
+}
+
+.mobile-switcher-preview-link-pill {
+	width: 5.4rem;
+	height: 2rem;
+}
+
+.mobile-switcher-preview-link-pill--muted {
+	width: 4.25rem;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12)),
+		rgba(191, 233, 255, 0.4);
+}
+
+.mobile-switcher-preview-explorer {
+	display: grid;
+	grid-template-columns: 4.4rem minmax(0, 1fr);
+	gap: 0.7rem;
+	flex: 1;
+	min-height: 0;
+}
+
+.mobile-switcher-preview-sidebar {
+	height: 100%;
+	min-height: 10rem;
+}
+
+.mobile-switcher-preview-file-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.6rem;
+	align-content: start;
+}
+
+.mobile-switcher-preview-file {
+	display: block;
+	aspect-ratio: 1 / 1.08;
+}
+
+.mobile-switcher-preview-browser-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.mobile-switcher-preview-browser-dot {
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 50%;
+	background:
+		linear-gradient(135deg, rgba(222, 107, 72, 0.92), rgba(233, 158, 112, 0.92));
+	border-color: rgba(222, 107, 72, 0.12);
+}
+
+.mobile-switcher-preview-browser-address {
+	flex: 1;
+	height: 2rem;
+}
+
+.mobile-switcher-preview-document {
+	flex: 1;
+	min-height: 11rem;
+	margin-top: 0.2rem;
 }
 
 .mobile-switcher-close {
