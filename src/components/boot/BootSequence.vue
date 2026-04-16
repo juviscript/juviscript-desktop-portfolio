@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import ScreenPowerOn from "./ScreenPowerOn.vue";
-import jsOsLogo from "../assets/jsOS Logo.png";
-import jsOsBiosLogo from "../assets/jsOS BIOS Logo.png";
+import jsOsLogo from "../../assets/jsOS Logo.png";
+import jsOsBiosLogo from "../../assets/jsOS BIOS Logo.png";
 
 const emit = defineEmits<{
 	complete: [];

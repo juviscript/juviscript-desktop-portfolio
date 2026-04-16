@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import BootSequence from "./components/BootSequence.vue";
-import DesktopWorkspace from "./components/DesktopWorkspace.vue";
-import MobileWorkspace from "./components/MobileWorkspace.vue";
-import MobileBootSequence from "./components/MobileBootSequence.vue";
+import BootSequence from "./components/boot/BootSequence.vue";
+import DesktopWorkspace from "./components/shell/DesktopWorkspace.vue";
+import MobileWorkspace from "./components/shell/MobileWorkspace.vue";
+import MobileBootSequence from "./components/boot/MobileBootSequence.vue";
 
 const bootComplete = ref(false);
 const isMobile = ref(false);
@@ -80,7 +80,8 @@ onUnmounted(() => {
 
 .phone-frame {
 	width: calc(100vw - 0.75rem);
-	height: calc(100vh - 0.75rem);
+	height: calc(100dvh - 0.75rem);
+	min-height: calc(100vh - 0.75rem);
 	padding: 0.35rem;
 	border-radius: 1.75rem;
 }

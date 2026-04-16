@@ -2,15 +2,14 @@
 import DesktopIcon from "./DesktopIcon.vue";
 import Taskbar from "./Taskbar.vue";
 import AppWindow from "./AppWindow.vue";
-import ExplorerApp from "./ExplorerApp.vue";
-import resumePdf from "../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
-import BrowserApp from "./BrowserApp.vue";
-import ProjectApp from "./ProjectApp.vue";
-import AboutApp from "./AboutApp.vue";
-
-import { desktopApps } from "../data/DesktopApps";
-import ContactApp from "./ContactApp.vue";
-import { useWorkspaceState } from "../composables/useWorkspaceState";
+import ExplorerApp from "../apps/ExplorerApp.vue";
+import resumePdf from "../../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
+import BrowserApp from "../apps/BrowserApp.vue";
+import ProjectApp from "../apps/ProjectApp.vue";
+import AboutApp from "../apps/AboutApp.vue";
+import ContactApp from "../apps/ContactApp.vue";
+import { desktopApps } from "../../data/DesktopApps";
+import { useWorkspaceState } from "../../composables/useWorkspaceState";
 
 const {
 	workspaceState,

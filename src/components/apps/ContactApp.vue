@@ -153,6 +153,7 @@ async function sendContactEmail() {
 	display: grid;
 	grid-template-columns: minmax(17rem, 24%) minmax(0, 1fr);
 	gap: var(--space-4);
+	overflow: auto;
 }
 
 .contact-sidebar,
@@ -245,6 +246,7 @@ async function sendContactEmail() {
 .contact-form-panel {
 	background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.1)), var(--color-surface);
 	padding: var(--space-5);
+	overflow: auto;
 }
 
 .contact-form {
@@ -402,11 +404,39 @@ async function sendContactEmail() {
 
 @media (max-width: 56rem) {
 	.contact-window {
-		grid-template-columns: 1fr;
+		height: auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		overflow: visible;
+	}
+
+	.contact-sidebar,
+	.contact-form-panel {
+		min-height: auto;
+		flex: 0 0 auto;
+		overflow: hidden;
+	}
+
+	.contact-form {
+		height: auto;
+		min-height: 0;
 	}
 
 	.field-grid {
 		grid-template-columns: 1fr;
+	}
+
+	.field-group--message {
+		flex: initial;
+	}
+
+	.field-shell--textarea {
+		flex: initial;
+	}
+
+	.field-input--textarea {
+		min-height: 11rem;
 	}
 
 	.form-footer {

@@ -44,6 +44,19 @@ const funFacts = ["Corgi fan", "Retro desktop enthusiast", "Enjoys turning ideas
 		</aside>
 
 		<section class="details-panel">
+			<div class="mobile-profile-tile">
+				<p class="mobile-profile-kicker">Developer Profile</p>
+				<h1 class="mobile-profile-name">Juvilane Panaguiton</h1>
+				<p class="mobile-profile-role">Full-Stack Developer</p>
+				<div class="mobile-profile-meta">
+					<span class="meta-chip">Solutions Developer II</span>
+					<span class="meta-chip meta-chip--soft">B.S. Software Engineering</span>
+				</div>
+				<p class="mobile-profile-summary">
+					Builds maintainable web products with a strong frontend eye and a practical full-stack foundation.
+				</p>
+			</div>
+
 			<div class="details-header">
 				<div>
 					<p class="eyebrow">System Properties</p>
@@ -105,6 +118,7 @@ const funFacts = ["Corgi fan", "Retro desktop enthusiast", "Enjoys turning ideas
 	display: grid;
 	grid-template-columns: minmax(18rem, 25%) minmax(0, 1fr);
 	gap: var(--space-4);
+	overflow: auto;
 }
 
 .profile-panel,
@@ -281,6 +295,60 @@ const funFacts = ["Corgi fan", "Retro desktop enthusiast", "Enjoys turning ideas
 	background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12)), var(--color-surface);
 }
 
+.mobile-profile-tile {
+	display: none;
+	flex-direction: column;
+	gap: var(--space-2);
+	padding: var(--space-4);
+	border-radius: var(--radius-lg);
+	background:
+		linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.18)),
+		linear-gradient(180deg, var(--color-surface-strong), var(--color-surface-muted));
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
+	box-shadow: 0 0.9rem 1.8rem rgba(90, 61, 43, 0.08);
+}
+
+.mobile-profile-kicker,
+.mobile-profile-name,
+.mobile-profile-role,
+.mobile-profile-summary {
+	margin: 0;
+}
+
+.mobile-profile-kicker {
+	font-family: var(--font-chrome);
+	font-size: var(--text-2xs);
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-ink-soft);
+}
+
+.mobile-profile-name {
+	font-family: var(--font-display);
+	font-size: clamp(1.6rem, 5vw, 2rem);
+	font-weight: 700;
+	line-height: var(--line-tight);
+	color: var(--color-ink);
+}
+
+.mobile-profile-role {
+	font-size: var(--text-sm);
+	font-weight: 600;
+	color: var(--color-ink-soft);
+}
+
+.mobile-profile-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.mobile-profile-summary {
+	color: var(--color-ink);
+	line-height: var(--line-normal);
+}
+
 .details-header {
 	display: flex;
 	align-items: flex-start;
@@ -422,6 +490,18 @@ const funFacts = ["Corgi fan", "Retro desktop enthusiast", "Enjoys turning ideas
 }
 
 @media (max-width: 48rem) {
+	.profile-panel {
+		display: none;
+	}
+
+	.mobile-profile-tile {
+		display: flex;
+	}
+
+	.details-panel {
+		padding: var(--space-4);
+	}
+
 	.details-header {
 		flex-direction: column;
 	}

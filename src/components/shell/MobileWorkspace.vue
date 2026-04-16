@@ -1,14 +1,34 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { desktopApps } from "../data/DesktopApps";
-import calendarDockIcon from "../assets/mobile-icons/calendar-icon.gif";
-import messagesDockIcon from "../assets/mobile-icons/messages-icon.png";
-import photosDockIcon from "../assets/mobile-icons/photos-icon.png";
-import settingsDockIcon from "../assets/mobile-icons/settings-icon.png";
-import wifiIcon from "../assets/mobile-icons/wifi-icon.svg";
-import { useWorkspaceState } from "../composables/useWorkspaceState";
+import { desktopApps } from "../../data/DesktopApps";
+import resumePdf from "../../assets/Juvilane Panaguiton - Resume (June 2025).pdf";
+import calendarDockIcon from "../../assets/mobile-icons/calendar-icon.gif";
+import messagesDockIcon from "../../assets/mobile-icons/messages-icon.png";
+import photosDockIcon from "../../assets/mobile-icons/photos-icon.png";
+import settingsDockIcon from "../../assets/mobile-icons/settings-icon.png";
+import wifiIcon from "../../assets/mobile-icons/wifi-icon.svg";
+import AboutApp from "../apps/AboutApp.vue";
+import BrowserApp from "../apps/BrowserApp.vue";
+import ContactApp from "../apps/ContactApp.vue";
+import ExplorerApp from "../apps/ExplorerApp.vue";
+import ProjectApp from "../apps/ProjectApp.vue";
+import ThemedIcon from "../shared/ThemedIcon.vue";
+import backPageIcon from "../../assets/window-icons/last-page-icon.svg?raw";
+import homeIcon from "../../assets/window-icons/home-icon.svg?raw";
+import maximizeWindowIcon from "../../assets/window-icons/maximize-window-icon.svg?raw";
+import { useWorkspaceState } from "../../composables/useWorkspaceState";
 
-const { workspaceState, openMobileApp, closeMobileApp, closeMobileAppById, switchMobileApp } = useWorkspaceState();
+const {
+	workspaceState,
+	openMobileApp,
+	closeMobileApp,
+	openMobileBrowserView,
+	closeMobileBrowserView,
+	openMobileProject,
+	closeMobileProject,
+	closeMobileAppById,
+	switchMobileApp,
+} = useWorkspaceState();
 
 const currentTime = computed(() =>
 	new Intl.DateTimeFormat("en-US", {
@@ -25,9 +45,6 @@ const dockApps = [
 ];
 
 const isAppSwitcherOpen = ref(false);
-const indicatorDragStartY = ref<number | null>(null);
-const indicatorActivePointerId = ref<number | null>(null);
-const dragOpenedSwitcher = ref(false);
 
 const activeApp = computed(() =>
 	workspaceState.mobile.activeAppId
@@ -40,6 +57,20 @@ const recentApps = computed(() =>
 		.map(id => desktopApps.find(app => app.id === id))
 		.filter((app): app is (typeof desktopApps)[number] => Boolean(app)),
 );
+
+const activeMobileBrowserView = computed(() =>
+	workspaceState.mobile.browserView?.sourceAppId === activeApp.value?.id
+		? workspaceState.mobile.browserView
+		: null,
+);
+
+const activeMobileProjectId = computed(() =>
+	activeApp.value?.id === "projects" && !activeMobileBrowserView.value
+		? workspaceState.mobile.projectViewId
+		: null,
+);
+
+const isNestedMobileView = computed(() => Boolean(activeMobileBrowserView.value || activeMobileProjectId.value));
 
 function getAppPreviewCopy(id: string) {
 	switch (id) {
@@ -79,6 +110,40 @@ function getAppPreviewEyebrow(id: string) {
 	}
 }
 
+function handleMobileOpenCertification(file: { id: string; title: string; filePath: string; displayUrl: string }) {
+	openMobileBrowserView({
+		sourceAppId: "certifications",
+		title: file.title,
+		url: file.displayUrl,
+		objectUrl: file.filePath,
+		isPdf: true,
+	});
+}
+
+function handleMobileOpenProject(projectId: string) {
+	openMobileProject(projectId);
+}
+
+function handleMobileOpenProjectUrl(projectId: string, url: string, title: string) {
+	openMobileBrowserView({
+		sourceAppId: "projects",
+		title,
+		url,
+		isPdf: false,
+	});
+}
+
+function handleMobileSubviewBack() {
+	if (activeMobileBrowserView.value) {
+		closeMobileBrowserView();
+		return;
+	}
+
+	if (activeMobileProjectId.value) {
+		closeMobileProject();
+	}
+}
+
 function openAppSwitcher() {
 	if (!recentApps.value.length) {
 		return;
@@ -104,69 +169,14 @@ function closeAppFromSwitcher(id: string) {
 	}
 }
 
-function handleIndicatorPointerDown(event: PointerEvent) {
-	const indicatorButton = event.currentTarget as HTMLElement | null;
-
-	indicatorDragStartY.value = event.clientY;
-	indicatorActivePointerId.value = event.pointerId;
-	dragOpenedSwitcher.value = false;
-	indicatorButton?.setPointerCapture(event.pointerId);
-}
-
-function handleIndicatorPointerMove(event: PointerEvent) {
-	if (
-		indicatorDragStartY.value === null
-		|| indicatorActivePointerId.value !== event.pointerId
-		|| dragOpenedSwitcher.value
-	) {
-		return;
-	}
-
-	const dragDistance = indicatorDragStartY.value - event.clientY;
-
-	if (dragDistance > 48) {
-		openAppSwitcher();
-		dragOpenedSwitcher.value = true;
-	}
-}
-
-function resetIndicatorDrag() {
-	indicatorDragStartY.value = null;
-	indicatorActivePointerId.value = null;
-
-	window.setTimeout(() => {
-		dragOpenedSwitcher.value = false;
-	}, 0);
-}
-
-function handleIndicatorPointerUp(event: PointerEvent) {
-	const indicatorButton = event.currentTarget as HTMLElement | null;
-
-	if (indicatorButton?.hasPointerCapture(event.pointerId)) {
-		indicatorButton.releasePointerCapture(event.pointerId);
-	}
-
-	resetIndicatorDrag();
-}
-
-function handleIndicatorPointerCancel(event: PointerEvent) {
-	const indicatorButton = event.currentTarget as HTMLElement | null;
-
-	if (indicatorButton?.hasPointerCapture(event.pointerId)) {
-		indicatorButton.releasePointerCapture(event.pointerId);
-	}
-
-	resetIndicatorDrag();
-}
-
-function handleIndicatorClick() {
-	if (dragOpenedSwitcher.value) {
-		return;
-	}
-
+function handleMobileHome() {
 	if (activeApp.value) {
 		closeMobileApp();
 	}
+}
+
+function handleMobileApps() {
+	openAppSwitcher();
 }
 </script>
 
@@ -199,7 +209,7 @@ function handleIndicatorClick() {
 					<p class="mobile-widget-label">Workspace</p>
 					<p class="mobile-widget-value">{{ recentApps.length || desktopApps.length }} apps ready</p>
 					<p class="mobile-widget-copy">
-						Drag the home indicator upward to open the app switcher and cycle through your recent mobile sessions.
+						Use the app navigation when a view is open to jump home or switch between recent mobile sessions.
 					</p>
 				</div>
 			</div>
@@ -218,50 +228,76 @@ function handleIndicatorClick() {
 					<img class="mobile-dock-icon" :src="dockApp.icon" :alt="`${dockApp.label} icon`" />
 				</button>
 			</div>
-
-			<button
-				class="home-indicator-button"
-				type="button"
-				aria-label="Open recent apps"
-				@pointerdown="handleIndicatorPointerDown"
-				@pointermove="handleIndicatorPointerMove"
-				@pointerup="handleIndicatorPointerUp"
-				@pointercancel="handleIndicatorPointerCancel"
-				@click="handleIndicatorClick">
-				<span class="home-indicator" aria-hidden="true"></span>
-			</button>
 		</div>
 
 		<div v-else class="mobile-app-view">
 			<div class="mobile-app-header">
 				<div class="mobile-app-header-copy">
-					<p class="mobile-kicker">App Preview</p>
+					<p class="mobile-kicker">{{ getAppPreviewEyebrow(activeApp?.id ?? "") }}</p>
 					<h2 class="mobile-app-title">{{ activeApp?.label }}</h2>
 				</div>
 			</div>
 
-			<div class="mobile-app-card">
-				<div class="mobile-app-card-header">
-					<div class="mobile-app-card-dot"></div>
-					<p class="mobile-app-card-title">{{ activeApp?.label }}</p>
+			<div class="mobile-app-surface">
+				<BrowserApp
+					v-if="activeApp?.id === 'resume'"
+					url="https://www.juviscript.dev/resume"
+					:objectUrl="resumePdf"
+					:isPdf="true" />
+
+				<BrowserApp
+					v-else-if="activeMobileBrowserView"
+					:url="activeMobileBrowserView.url"
+					:objectUrl="activeMobileBrowserView.objectUrl"
+					:isPdf="activeMobileBrowserView.isPdf" />
+
+				<ProjectApp
+					v-else-if="activeMobileProjectId"
+					:project-id="activeMobileProjectId"
+					@open-url="handleMobileOpenProjectUrl" />
+
+				<ExplorerApp
+					v-else-if="activeApp?.id === 'certifications'"
+					id="certifications"
+					url="jsOS:/certifications"
+					@open-file="handleMobileOpenCertification" />
+
+				<ExplorerApp
+					v-else-if="activeApp?.id === 'projects'"
+					id="projects"
+					url="jsOS:/projects"
+					@open-project="handleMobileOpenProject" />
+
+				<AboutApp v-else-if="activeApp?.id === 'about'" />
+				<ContactApp v-else-if="activeApp?.id === 'contact'" />
+
+				<div v-else-if="activeApp?.id === 'recycle-bin'" class="mobile-empty-app">
+					<div class="mobile-empty-app__content">
+						<p class="mobile-empty-app__eyebrow">System</p>
+						<h3 class="mobile-empty-app__title">Recycle Bin</h3>
+						<p class="mobile-empty-app__copy">Nothing to clean up here yet.</p>
+					</div>
 				</div>
-				<p class="mobile-app-card-eyebrow">{{ getAppPreviewEyebrow(activeApp?.id ?? "") }}</p>
-				<p class="mobile-app-copy">
-					This is the placeholder mobile view for {{ activeApp?.label }}. Returning home does not clear the app session, so you can switch breakpoints or reopen it from the recent-app strip without losing state.
-				</p>
 			</div>
 
-			<button
-				class="home-indicator-button"
-				type="button"
-				aria-label="Go home or open recent apps"
-				@pointerdown="handleIndicatorPointerDown"
-				@pointermove="handleIndicatorPointerMove"
-				@pointerup="handleIndicatorPointerUp"
-				@pointercancel="handleIndicatorPointerCancel"
-				@click="handleIndicatorClick">
-				<span class="home-indicator" aria-hidden="true"></span>
-			</button>
+			<nav class="mobile-bottom-toolbar" aria-label="Mobile navigation">
+				<button
+					class="mobile-bottom-toolbar-button"
+					:class="{ 'mobile-bottom-toolbar-button--disabled': !isNestedMobileView }"
+					type="button"
+					:disabled="!isNestedMobileView"
+					:aria-disabled="(!isNestedMobileView).toString()"
+					aria-label="Back"
+					@click="handleMobileSubviewBack">
+					<ThemedIcon class="mobile-bottom-toolbar-icon" :svg="backPageIcon" />
+				</button>
+				<button class="mobile-bottom-toolbar-button" type="button" aria-label="Home" @click="handleMobileHome">
+					<ThemedIcon class="mobile-bottom-toolbar-icon" :svg="homeIcon" />
+				</button>
+				<button class="mobile-bottom-toolbar-button" type="button" aria-label="Apps" @click="handleMobileApps">
+					<ThemedIcon class="mobile-bottom-toolbar-icon" :svg="maximizeWindowIcon" />
+				</button>
+			</nav>
 		</div>
 
 		<transition name="mobile-switcher-fade">
@@ -339,12 +375,13 @@ function handleIndicatorClick() {
 .mobile-workspace {
 	width: 100%;
 	height: 100%;
-    padding: 1rem; 
+	padding:
+		calc(0.75rem + env(safe-area-inset-top))
+		1rem
+		calc(0.75rem + env(safe-area-inset-bottom));
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-4);
-	width: 100%;
-	height: 100%;
 	background-color: #edc37a;
 	background-image:
 		linear-gradient(45deg, rgba(255, 246, 220, 0.18) 25%, transparent 25%, transparent 75%, rgba(255, 246, 220, 0.18) 75%, rgba(255, 246, 220, 0.18)),
@@ -359,6 +396,7 @@ function handleIndicatorClick() {
 		center;
 	overflow: hidden;
 	position: relative;
+	overscroll-behavior: none;
 }
 
 .mobile-status-bar {
@@ -369,6 +407,7 @@ function handleIndicatorClick() {
 	color: var(--color-ink);
 	border-radius: var(--radius-pill);
 	background: var(--color-frame-top);
+	flex-shrink: 0;
 }
 
 .mobile-time {
@@ -441,7 +480,24 @@ function handleIndicatorClick() {
 	display: flex;
 	flex-direction: column;
 	position: relative;
-	padding-bottom: calc(var(--space-5) + 1.4rem);
+	overflow: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none;
+}
+
+.mobile-home-screen {
+	padding-bottom: calc(var(--space-6) + 1.5rem + env(safe-area-inset-bottom));
+}
+
+.mobile-app-view {
+	padding-bottom: calc(var(--space-8) + 3.9rem + env(safe-area-inset-bottom));
+}
+
+.mobile-home-screen::-webkit-scrollbar,
+.mobile-app-view::-webkit-scrollbar,
+.mobile-app-surface::-webkit-scrollbar {
+	display: none;
 }
 
 .mobile-hero {
@@ -529,6 +585,7 @@ function handleIndicatorClick() {
 	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: var(--space-3) var(--space-2);
 	align-content: start;
+	padding-bottom: var(--space-3);
 }
 
 .mobile-app-button {
@@ -584,7 +641,7 @@ function handleIndicatorClick() {
 
 .mobile-dock {
 	margin-top: auto;
-	margin-bottom: calc(var(--space-3) + 1rem);
+	margin-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
 	display: flex;
 	gap: var(--space-2);
 	justify-content: center;
@@ -636,46 +693,106 @@ function handleIndicatorClick() {
 	gap: var(--space-1);
 }
 
-.mobile-app-card {
+.mobile-app-surface {
 	flex: 1;
 	min-height: 0;
-	padding: var(--space-4);
+	display: flex;
+	flex-direction: column;
 	border-radius: 1.5rem;
 	background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.14)), rgba(255, 249, 241, 0.9);
 	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
 	box-shadow: var(--shadow-card);
+	overflow: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	padding: var(--space-3);
 }
 
-.mobile-app-card-header {
-	display: flex;
-	align-items: center;
+.mobile-bottom-toolbar {
+	position: absolute;
+	left: 50%;
+	bottom: calc(1.9rem + env(safe-area-inset-bottom));
+	transform: translateX(-50%);
+	z-index: 4;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: var(--space-2);
-	margin-bottom: var(--space-3);
+	width: min(100%, 22rem);
+	padding: 0.5rem;
+	border-radius: 1.25rem;
+	background: rgba(247, 227, 207, 0.94);
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.14);
+	box-shadow:
+		0 1rem 1.8rem rgba(90, 61, 43, 0.16),
+		inset 0 0 0 0.0625rem rgba(255, 255, 255, 0.32);
+	backdrop-filter: blur(0.75rem);
 }
 
-.mobile-app-card-dot {
-	width: 0.65rem;
-	height: 0.65rem;
-	border-radius: 50%;
-	background: var(--color-accent-red);
-}
-
-.mobile-app-card-title {
-	font-family: var(--font-chrome);
-	font-size: var(--text-xs);
-	font-weight: 600;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: var(--color-ink-soft);
-}
-
-.mobile-app-copy {
+.mobile-bottom-toolbar-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0;
+	min-height: 3rem;
+	padding: 0.35rem;
+	border: none;
+	border-radius: 0.95rem;
+	background: rgba(255, 255, 255, 0.4);
 	color: var(--color-ink);
-	line-height: var(--line-loose);
+	cursor: pointer;
+	transition:
+		transform 140ms ease,
+		background-color 140ms ease,
+		box-shadow 140ms ease,
+		opacity 140ms ease;
 }
 
-.mobile-app-card-eyebrow {
-	margin: 0 0 var(--space-2);
+.mobile-bottom-toolbar-button:hover:not(:disabled),
+.mobile-bottom-toolbar-button:focus-visible:not(:disabled) {
+	transform: translateY(-0.0625rem);
+	background: rgba(255, 255, 255, 0.65);
+	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.12);
+}
+
+.mobile-bottom-toolbar-button--active {
+	background: linear-gradient(135deg, rgba(222, 107, 72, 0.92), rgba(233, 158, 112, 0.92));
+	color: var(--color-white);
+	box-shadow: 0 0.6rem 1.1rem rgba(222, 107, 72, 0.22);
+}
+
+.mobile-bottom-toolbar-button--disabled {
+	opacity: 0.5;
+	box-shadow: none;
+	cursor: default;
+}
+
+.mobile-bottom-toolbar-icon {
+	width: 1.15rem;
+	height: 1.15rem;
+}
+
+.mobile-empty-app {
+	width: 100%;
+	height: 100%;
+	display: grid;
+	place-items: center;
+	padding: var(--space-5);
+}
+
+.mobile-empty-app__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	text-align: center;
+}
+
+.mobile-empty-app__eyebrow,
+.mobile-empty-app__title,
+.mobile-empty-app__copy {
+	margin: 0;
+}
+
+.mobile-empty-app__eyebrow {
 	font-family: var(--font-chrome);
 	font-size: var(--text-2xs);
 	letter-spacing: 0.05em;
@@ -683,33 +800,16 @@ function handleIndicatorClick() {
 	color: var(--color-ink-soft);
 }
 
-.home-indicator-button {
-	width: 9rem;
-	height: 1.75rem;
-	position: absolute;
-	left: 50%;
-	bottom: 0.2rem;
-	transform: translateX(-50%);
-	display: grid;
-	place-items: center;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	z-index: 4;
-	touch-action: none;
-	-webkit-user-select: none;
-	user-select: none;
+.mobile-empty-app__title {
+	font-family: var(--font-display);
+	font-size: var(--text-xl);
+	line-height: var(--line-tight);
+	color: var(--color-ink);
 }
 
-.home-indicator {
-	display: block;
-	width: 8rem;
-	height: 0.38rem;
-	border-radius: var(--radius-pill);
-	background: rgba(90, 61, 43, 0.34);
-	box-shadow:
-		0 0.15rem 0.5rem rgba(255, 255, 255, 0.28),
-		0 0.25rem 0.6rem rgba(90, 61, 43, 0.12);
+.mobile-empty-app__copy {
+	color: var(--color-ink);
+	line-height: var(--line-loose);
 }
 
 .mobile-switcher-overlay {
@@ -718,7 +818,10 @@ function handleIndicatorClick() {
 	z-index: 20;
 	display: flex;
 	align-items: stretch;
-	padding: 0.85rem;
+	padding:
+		calc(0.85rem + env(safe-area-inset-top))
+		0.85rem
+		calc(0.85rem + env(safe-area-inset-bottom));
 	background: rgba(90, 61, 43, 0.18);
 	backdrop-filter: blur(0.5rem);
 }

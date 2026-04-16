@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from "vue";
 import WindowControlButton from "./WindowControlButton.vue";
-import closeWindowIcon from "../assets/window-icons/close-window-icon.svg?raw";
-import maximizeWindowIcon from "../assets/window-icons/maximize-window-icon.svg?raw";
-import minimizeWindowIcon from "../assets/window-icons/minimize-window-icon.svg?raw";
+import closeWindowIcon from "../../assets/window-icons/close-window-icon.svg?raw";
+import maximizeWindowIcon from "../../assets/window-icons/maximize-window-icon.svg?raw";
+import minimizeWindowIcon from "../../assets/window-icons/minimize-window-icon.svg?raw";
 
 const props = defineProps<{
 	id: string;

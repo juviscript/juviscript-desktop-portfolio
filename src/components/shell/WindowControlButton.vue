@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ThemedIcon from "./ThemedIcon.vue";
+import ThemedIcon from "../shared/ThemedIcon.vue";
 
 defineProps<{
 	action: string;

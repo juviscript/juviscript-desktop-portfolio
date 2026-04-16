@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { projects } from "../data/Projects";
+import { projects } from "../../data/Projects";
 
 const props = defineProps<{
 	projectId: string;
@@ -48,15 +48,18 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 	flex-direction: column;
 	width: 100%;
 	height: 100%;
+	min-height: 0;
 	gap: 1rem;
 	padding: 1rem;
 	box-sizing: border-box;
+	overflow: auto;
 }
 
 .project-top-container {
 	text-align: center;
 	margin: auto;
 	flex-grow: 1;
+	min-height: 0;
 }
 
 .project-bottom-container {
@@ -133,5 +136,23 @@ const selectedProject = computed(() => projects.find(project => project.id === p
 	justify-content: center;
 	width: 100%;
 	height: 100%;
+}
+
+@media (max-width: 48rem) {
+	.project-container {
+		padding: 0.85rem;
+	}
+
+	.project-bottom-container {
+		padding: 0.85rem;
+	}
+
+	.project-quick-links {
+		flex-direction: column;
+	}
+
+	.project-link {
+		text-align: center;
+	}
 }
 </style>

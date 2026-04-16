@@ -19,6 +19,14 @@ type BrowserFile = {
 	displayUrl: string;
 };
 
+type MobileBrowserView = {
+	sourceAppId: string;
+	title: string;
+	url: string;
+	objectUrl?: string;
+	isPdf: boolean;
+};
+
 const workspaceState = reactive({
 	desktop: {
 		openWindows: [] as DesktopOpenWindow[],
@@ -27,6 +35,8 @@ const workspaceState = reactive({
 	mobile: {
 		activeAppId: null as string | null,
 		recentAppIds: [] as string[],
+		browserView: null as MobileBrowserView | null,
+		projectViewId: null as string | null,
 	},
 });
 
@@ -209,11 +219,39 @@ function closeMobileApp() {
 	workspaceState.mobile.activeAppId = null;
 }
 
+function openMobileBrowserView(view: MobileBrowserView) {
+	workspaceState.mobile.browserView = view;
+	workspaceState.mobile.activeAppId = view.sourceAppId;
+	bumpRecentMobileApp(view.sourceAppId);
+}
+
+function closeMobileBrowserView() {
+	workspaceState.mobile.browserView = null;
+}
+
+function openMobileProject(projectId: string) {
+	workspaceState.mobile.projectViewId = projectId;
+	workspaceState.mobile.activeAppId = "projects";
+	bumpRecentMobileApp("projects");
+}
+
+function closeMobileProject() {
+	workspaceState.mobile.projectViewId = null;
+}
+
 function closeMobileAppById(id: string) {
 	workspaceState.mobile.recentAppIds = workspaceState.mobile.recentAppIds.filter(existingId => existingId !== id);
 
 	if (workspaceState.mobile.activeAppId === id) {
 		workspaceState.mobile.activeAppId = null;
+	}
+
+	if (workspaceState.mobile.browserView?.sourceAppId === id) {
+		workspaceState.mobile.browserView = null;
+	}
+
+	if (id === "projects") {
+		workspaceState.mobile.projectViewId = null;
 	}
 }
 
@@ -234,6 +272,10 @@ export function useWorkspaceState() {
 		openDesktopProjectWindow,
 		openMobileApp,
 		closeMobileApp,
+		openMobileBrowserView,
+		closeMobileBrowserView,
+		openMobileProject,
+		closeMobileProject,
 		closeMobileAppById,
 		switchMobileApp,
 	};

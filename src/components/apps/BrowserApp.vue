@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import ThemedIcon from "./ThemedIcon.vue";
-import backPageIcon from "../assets/window-icons/last-page-icon.svg?raw";
-import forwardPageIcon from "../assets/window-icons/next-page-icon.svg?raw";
-import refreshPageIcon from "../assets/window-icons/refresh-icon.svg?raw";
-import homeIcon from "../assets/window-icons/home-icon.svg?raw";
+import ThemedIcon from "../shared/ThemedIcon.vue";
+import backPageIcon from "../../assets/window-icons/last-page-icon.svg?raw";
+import forwardPageIcon from "../../assets/window-icons/next-page-icon.svg?raw";
+import refreshPageIcon from "../../assets/window-icons/refresh-icon.svg?raw";
+import homeIcon from "../../assets/window-icons/home-icon.svg?raw";
 
 const props = defineProps<{
 	url: string;
@@ -36,7 +36,7 @@ const props = defineProps<{
 
 			<div class="browser-navigation-menu">
 				<button class="browser-menu-button" type="button" aria-label="Browser menu">
-					<span class="browser-menu-dots" aria-hidden="true">•••</span>
+					<span class="browser-menu-dots" aria-hidden="true">&#8226;&#8226;&#8226;</span>
 				</button>
 			</div>
 		</div>
@@ -57,6 +57,7 @@ const props = defineProps<{
 .browser-window {
 	width: 100%;
 	height: 100%;
+	min-height: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-3);
@@ -152,7 +153,7 @@ const props = defineProps<{
 .browser-content {
 	flex: 1;
 	min-height: 0;
-	overflow: hidden;
+	overflow: auto;
 	border-radius: var(--radius-lg);
 	border: var(--border-thin) solid rgba(90, 61, 43, 0.1);
 	background: rgba(255, 255, 255, 0.62);
@@ -174,5 +175,25 @@ const props = defineProps<{
 .browser-fallback a {
 	color: var(--color-accent-red);
 	font-weight: 600;
+}
+
+@media (max-width: 48rem) {
+	.browser-navigation-bar {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.browser-navigation-buttons {
+		order: 2;
+		justify-content: space-between;
+	}
+
+	.browser-navigation-address-bar {
+		order: 1;
+	}
+
+	.browser-navigation-menu {
+		order: 3;
+		justify-self: end;
+	}
 }
 </style>

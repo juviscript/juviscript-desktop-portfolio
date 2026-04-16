@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { certifications, type Certification } from "../data/Certifications";
-import { projects, type Project } from "../data/Projects";
-import ThemedIcon from "./ThemedIcon.vue";
-import backPageIcon from "../assets/window-icons/last-page-icon.svg?raw";
-import forwardPageIcon from "../assets/window-icons/next-page-icon.svg?raw";
-import refreshPageIcon from "../assets/window-icons/refresh-icon.svg?raw";
-import certificationDirectoryIcon from "../assets/desktop-icons/certification-icon.png";
-import folderDirectoryIcon from "../assets/desktop-icons/folder-icon.png";
-import mailDirectoryIcon from "../assets/desktop-icons/mail-icon.png";
-import projectsDirectoryIcon from "../assets/desktop-icons/projects-icon.png";
-import recycleBinDirectoryIcon from "../assets/desktop-icons/recycle-bin-icon.png";
+import { computed, ref } from "vue";
+import { certifications, type Certification } from "../../data/Certifications";
+import { projects, type Project } from "../../data/Projects";
+import ThemedIcon from "../shared/ThemedIcon.vue";
+import backPageIcon from "../../assets/window-icons/last-page-icon.svg?raw";
+import forwardPageIcon from "../../assets/window-icons/next-page-icon.svg?raw";
+import refreshPageIcon from "../../assets/window-icons/refresh-icon.svg?raw";
+import certificationDirectoryIcon from "../../assets/desktop-icons/certification-icon.png";
+import folderDirectoryIcon from "../../assets/desktop-icons/folder-icon.png";
+import mailDirectoryIcon from "../../assets/desktop-icons/mail-icon.png";
+import projectsDirectoryIcon from "../../assets/desktop-icons/projects-icon.png";
+import recycleBinDirectoryIcon from "../../assets/desktop-icons/recycle-bin-icon.png";
 
 const props = defineProps<{
 	id: string;
 	url: string;
+	interactionMode?: "single" | "double";
 }>();
 
 const emit = defineEmits<{
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const searchPlaceholder = computed(() => props.id === "projects" ? "Search Projects..." : "Search Certifications...");
+const isDirectoryOpen = ref(false);
 
 const directorySections = computed(() => [
 	{
@@ -56,6 +58,10 @@ function openCertification(certification: Certification) {
 function openProject(project: Project) {
 	emit("open-project", project.id);
 }
+
+function toggleDirectory() {
+	isDirectoryOpen.value = !isDirectoryOpen.value;
+}
 </script>
 
 <template>
@@ -80,8 +86,17 @@ function openProject(project: Project) {
 			</div>
 		</div>
 
+		<button
+			class="file-explorer-directory-toggle"
+			type="button"
+			:aria-expanded="isDirectoryOpen"
+			@click="toggleDirectory">
+			<img class="file-explorer-directory-toggle-icon" :src="folderDirectoryIcon" alt="" aria-hidden="true" />
+			<span>{{ isDirectoryOpen ? "Hide Places & Utilities" : "Show Places & Utilities" }}</span>
+		</button>
+
 		<div class="file-explorer-content">
-			<div class="file-explorer-directory">
+			<div class="file-explorer-directory" :class="{ 'is-open': isDirectoryOpen }">
 				<div v-for="section in directorySections" :key="section.title" class="file-explorer-directory-section">
 					<p class="file-explorer-directory-heading">{{ section.title }}</p>
 					<ul class="file-explorer-directory-list">
@@ -99,12 +114,25 @@ function openProject(project: Project) {
 
 			<div class="file-explorer-main-content">
 				<div class="file-explorer-file-wrapper">
-					<div v-if="props.id === 'certifications'" v-for="cert in certifications" :key="cert.id" class="file-explorer-file" :class="{ disabled: !cert.filePath }" @dblclick="openCertification(cert)">
+					<div
+						v-if="props.id === 'certifications'"
+						v-for="cert in certifications"
+						:key="cert.id"
+						class="file-explorer-file"
+						:class="{ disabled: !cert.filePath }"
+						@click="props.interactionMode === 'single' && openCertification(cert)"
+						@dblclick="openCertification(cert)">
 						<img class="file-icon" :src="cert.icon" :alt="`${cert.title} icon`" />
 						<div class="file-name">{{ cert.title }}</div>
 					</div>
 
-					<div v-else-if="props.id === 'projects'" v-for="project in projects" :key="project.id" class="file-explorer-file" @dblclick="openProject(project)">
+					<div
+						v-else-if="props.id === 'projects'"
+						v-for="project in projects"
+						:key="project.id"
+						class="file-explorer-file"
+						@click="props.interactionMode === 'single' && openProject(project)"
+						@dblclick="openProject(project)">
 						<img class="file-icon" :src="project.icon" :alt="`${project.name} icon`" />
 						<div class="file-name">{{ project.name }}</div>
 					</div>
@@ -121,6 +149,7 @@ function openProject(project: Project) {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	min-height: 0;
 }
 
 .file-explorer-title-bar {
@@ -225,6 +254,7 @@ function openProject(project: Project) {
 	flex-grow: 1;
 	display: flex;
 	gap: 1rem;
+	min-height: 0;
 }
 
 .file-explorer-directory {
@@ -235,12 +265,16 @@ function openProject(project: Project) {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-4);
+	overflow: auto;
 }
 
 .file-explorer-main-content {
 	border-radius: var(--radius-lg);
 	flex-grow: 1;
 	background-color: white;
+	display: flex;
+	min-height: 0;
+	overflow: hidden;
 }
 
 .file-explorer-file-wrapper {
@@ -363,5 +397,63 @@ function openProject(project: Project) {
 	height: 1.25rem;
 	object-fit: contain;
 	flex: 0 0 1.25rem;
+}
+
+.file-explorer-directory-toggle {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+	min-height: 2.5rem;
+	padding: 0.65rem 0.9rem;
+	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
+	border-radius: var(--radius-pill);
+	background: rgba(255, 255, 255, 0.82);
+	color: var(--color-ink);
+	font-size: var(--text-sm);
+	font-weight: 600;
+	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.08);
+}
+
+.file-explorer-directory-toggle-icon {
+	width: 1rem;
+	height: 1rem;
+	object-fit: contain;
+}
+
+@media (max-width: 56rem) {
+	.file-explorer-title-bar {
+		height: auto;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.file-explorer-directory-toggle {
+		display: inline-flex;
+		align-self: stretch;
+	}
+
+	.file-explorer-content {
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	.file-explorer-directory {
+		display: none;
+		width: 100%;
+		max-height: 16rem;
+	}
+
+	.file-explorer-directory.is-open {
+		display: flex;
+	}
+
+	.file-explorer-file-wrapper {
+		grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+	}
+
+	.file-explorer-file {
+		width: auto;
+	}
 }
 </style>
