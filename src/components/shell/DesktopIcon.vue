@@ -1,20 +1,27 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
 	id: string;
 	label: string;
 	icon: string;
+	tabIndex?: number;
 }>();
 
 const emit = defineEmits<{
 	open: [id: string];
 }>();
+
+function handleActivate(event: MouseEvent) {
+	if (event.detail === 0) {
+		emit("open", props.id);
+	}
+}
 </script>
 
 <template>
-	<div class="desktop-icon" @dblclick="() => emit('open', id)">
-		<img class="icon-image" :src="icon" :alt="`${label} icon`" />
-		<span class="icon-label">{{ label }}</span>
-	</div>
+	<button class="desktop-icon" type="button" :tabindex="props.tabIndex ?? 0" :aria-label="label" @click="handleActivate" @dblclick="() => emit('open', props.id)">
+		<img class="icon-image" :src="props.icon" alt="" aria-hidden="true" />
+		<span class="icon-label">{{ props.label }}</span>
+	</button>
 </template>
 
 <style scoped>
@@ -25,9 +32,12 @@ const emit = defineEmits<{
 	gap: var(--space-2);
 	width: 5.75rem;
 	padding: var(--space-2);
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	border: var(--border-thin) solid transparent;
 	cursor: pointer;
 	user-select: none;
-	border: var(--border-thin) solid transparent;
 	border-radius: var(--radius-lg);
 	transition:
 		transform 140ms ease,
@@ -45,8 +55,14 @@ const emit = defineEmits<{
 
 .desktop-icon:focus {
 	outline: none;
+}
+
+.desktop-icon:focus-visible {
 	border-color: rgba(255, 255, 255, 0.8);
 	background: rgba(255, 249, 241, 0.46);
+	box-shadow:
+		0 0 0 0.18rem rgba(255, 255, 255, 0.46),
+		0 0.75rem 1.5rem rgba(90, 61, 43, 0.14);
 }
 
 .icon-image {

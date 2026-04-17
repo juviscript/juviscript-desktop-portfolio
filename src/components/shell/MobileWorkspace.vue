@@ -47,7 +47,10 @@ const dockApps = [
 const isAppSwitcherOpen = ref(false);
 const switcherPreviewIndex = ref(0);
 const switcherCarousel = ref<HTMLElement | null>(null);
+const switcherDoneButton = ref<HTMLButtonElement | null>(null);
+const appsButton = ref<HTMLButtonElement | null>(null);
 let switcherScrollFrame: number | null = null;
+let lastSwitcherTrigger: HTMLElement | null = null;
 
 const activeApp = computed(() =>
 	workspaceState.mobile.activeAppId
@@ -147,10 +150,12 @@ function handleMobileSubviewBack() {
 	}
 }
 
-function openAppSwitcher() {
+function openAppSwitcher(triggerElement: HTMLElement | null = document.activeElement as HTMLElement | null) {
 	if (!recentApps.value.length) {
 		return;
 	}
+
+	lastSwitcherTrigger = triggerElement;
 
 	const activeIndex = activeApp.value
 		? recentApps.value.findIndex(app => app.id === activeApp.value?.id)
@@ -161,16 +166,34 @@ function openAppSwitcher() {
 
 	nextTick(() => {
 		scrollSwitcherToIndex(switcherPreviewIndex.value);
+		switcherDoneButton.value?.focus({ preventScroll: true });
 	});
 }
 
-function closeAppSwitcher() {
+function closeAppSwitcher({ restoreFocus = true }: { restoreFocus?: boolean } = {}) {
 	isAppSwitcherOpen.value = false;
+
+	if (!restoreFocus) {
+		return;
+	}
+
+	nextTick(() => {
+		if (lastSwitcherTrigger?.isConnected) {
+			lastSwitcherTrigger.focus({ preventScroll: true });
+			return;
+		}
+
+		appsButton.value?.focus({ preventScroll: true });
+	});
 }
 
 function selectAppFromSwitcher(id: string) {
 	switchMobileApp(id);
-	closeAppSwitcher();
+	closeAppSwitcher({ restoreFocus: false });
+
+	nextTick(() => {
+		appsButton.value?.focus({ preventScroll: true });
+	});
 }
 
 function closeAppFromSwitcher(id: string) {
@@ -270,7 +293,7 @@ function handleMobileHome() {
 }
 
 function handleMobileApps() {
-	openAppSwitcher();
+	openAppSwitcher(appsButton.value);
 }
 </script>
 
@@ -311,16 +334,16 @@ function handleMobileApps() {
 			<div class="mobile-app-grid">
 				<button v-for="app in desktopApps" :key="app.id" class="mobile-app-button" type="button" @click="openMobileApp(app.id)">
 					<div class="mobile-app-icon-shell">
-						<img class="mobile-app-icon" :src="app.icon" :alt="`${app.label} icon`" />
+						<img class="mobile-app-icon" :src="app.icon" alt="" aria-hidden="true" />
 					</div>
 					<span class="mobile-app-label">{{ app.label }}</span>
 				</button>
 			</div>
 
 			<div class="mobile-dock">
-				<button v-for="dockApp in dockApps" :key="dockApp.id" class="mobile-dock-button" type="button" aria-label="Dock placeholder">
-					<img class="mobile-dock-icon" :src="dockApp.icon" :alt="`${dockApp.label} icon`" />
-				</button>
+				<div v-for="dockApp in dockApps" :key="dockApp.id" class="mobile-dock-button" aria-hidden="true">
+					<img class="mobile-dock-icon" :src="dockApp.icon" alt="" aria-hidden="true" />
+				</div>
 			</div>
 		</div>
 
@@ -390,21 +413,22 @@ function handleMobileApps() {
 				<button class="mobile-bottom-toolbar-button" type="button" aria-label="Home" @click="handleMobileHome">
 					<ThemedIcon class="mobile-bottom-toolbar-icon" :svg="homeIcon" />
 				</button>
-				<button class="mobile-bottom-toolbar-button" type="button" aria-label="Apps" @click="handleMobileApps">
+				<button ref="appsButton" class="mobile-bottom-toolbar-button" type="button" aria-label="Apps" @click="handleMobileApps">
 					<ThemedIcon class="mobile-bottom-toolbar-icon" :svg="maximizeWindowIcon" />
 				</button>
 			</nav>
 		</div>
 
 		<transition name="mobile-switcher-fade">
-			<div v-if="isAppSwitcherOpen" class="mobile-switcher-overlay" @click.self="closeAppSwitcher">
-				<div class="mobile-switcher-sheet">
+			<div v-if="isAppSwitcherOpen" class="mobile-switcher-overlay" @click.self="closeAppSwitcher()" @keydown.esc="closeAppSwitcher()">
+				<div class="mobile-switcher-sheet" role="dialog" aria-modal="true" aria-labelledby="mobile-switcher-title">
 					<div class="mobile-switcher-sheet-header">
 						<div>
 							<p class="mobile-kicker">Recent Apps</p>
+							<h2 id="mobile-switcher-title" class="mobile-switcher-title">App Switcher</h2>
 							<p class="mobile-switcher-count">{{ recentApps.length }} tracked</p>
 						</div>
-						<button class="mobile-switcher-done" type="button" @click="closeAppSwitcher">Done</button>
+						<button ref="switcherDoneButton" class="mobile-switcher-done" type="button" @click="closeAppSwitcher()">Done</button>
 					</div>
 
 					<div ref="switcherCarousel" class="mobile-switcher-carousel" @scroll="handleSwitcherScroll">
@@ -414,7 +438,7 @@ function handleMobileApps() {
 							class="mobile-switcher-card"
 							:class="{ 'mobile-switcher-card--active-preview': index === switcherPreviewIndex }"
 							:style="getSwitcherCardStyle(index)">
-							<button class="mobile-switcher-card-frame" type="button" @click="selectAppFromSwitcher(app.id)">
+							<button class="mobile-switcher-card-frame" type="button" :aria-label="`Switch to ${app.label}`" @click="selectAppFromSwitcher(app.id)">
 								<div class="mobile-switcher-preview-body">
 									<div class="mobile-switcher-preview-window">
 										<div class="mobile-switcher-preview-status">
@@ -519,7 +543,7 @@ function handleMobileApps() {
 								</div>
 							</button>
 
-							<button class="mobile-switcher-close" type="button" @click="closeAppFromSwitcher(app.id)">
+							<button class="mobile-switcher-close" type="button" :aria-label="`Close ${app.label}`" @click="closeAppFromSwitcher(app.id)">
 								Close App
 							</button>
 						</article>
@@ -1012,6 +1036,15 @@ function handleMobileApps() {
 	color: var(--color-ink-soft);
 }
 
+.mobile-switcher-title {
+	margin: 0.2rem 0 0;
+	font-family: var(--font-display);
+	font-size: var(--text-lg);
+	font-weight: 700;
+	line-height: var(--line-tight);
+	color: var(--color-ink);
+}
+
 .mobile-switcher-done {
 	min-height: 2.15rem;
 	padding: 0.35rem 0.9rem;
@@ -1022,6 +1055,15 @@ function handleMobileApps() {
 	font-size: var(--text-2xs);
 	font-weight: 700;
 	cursor: pointer;
+}
+
+.mobile-switcher-done:focus-visible,
+.mobile-switcher-card-frame:focus-visible,
+.mobile-switcher-close:focus-visible {
+	outline: none;
+	box-shadow:
+		0 0 0 0.18rem rgba(222, 107, 72, 0.18),
+		0 0.7rem 1.2rem rgba(90, 61, 43, 0.12);
 }
 
 .mobile-switcher-carousel {

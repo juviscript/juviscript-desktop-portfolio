@@ -62,6 +62,18 @@ function openProject(project: Project) {
 function toggleDirectory() {
 	isDirectoryOpen.value = !isDirectoryOpen.value;
 }
+
+function handleCertificationActivate(certification: Certification, event: MouseEvent) {
+	if (props.interactionMode === "single" || event.detail === 0) {
+		openCertification(certification);
+	}
+}
+
+function handleProjectActivate(project: Project, event: MouseEvent) {
+	if (props.interactionMode === "single" || event.detail === 0) {
+		openProject(project);
+	}
+}
 </script>
 
 <template>
@@ -114,28 +126,31 @@ function toggleDirectory() {
 
 			<div class="file-explorer-main-content">
 				<div class="file-explorer-file-wrapper">
-					<div
+					<button
 						v-if="props.id === 'certifications'"
 						v-for="cert in certifications"
 						:key="cert.id"
 						class="file-explorer-file"
 						:class="{ disabled: !cert.filePath }"
-						@click="props.interactionMode === 'single' && openCertification(cert)"
+						type="button"
+						:disabled="!cert.filePath"
+						@click="handleCertificationActivate(cert, $event)"
 						@dblclick="openCertification(cert)">
-						<img class="file-icon" :src="cert.icon" :alt="`${cert.title} icon`" />
+						<img class="file-icon" :src="cert.icon" alt="" aria-hidden="true" />
 						<div class="file-name">{{ cert.title }}</div>
-					</div>
+					</button>
 
-					<div
+					<button
 						v-else-if="props.id === 'projects'"
 						v-for="project in projects"
 						:key="project.id"
 						class="file-explorer-file"
-						@click="props.interactionMode === 'single' && openProject(project)"
+						type="button"
+						@click="handleProjectActivate(project, $event)"
 						@dblclick="openProject(project)">
-						<img class="file-icon" :src="project.icon" :alt="`${project.name} icon`" />
+						<img class="file-icon" :src="project.icon" alt="" aria-hidden="true" />
 						<div class="file-name">{{ project.name }}</div>
-					</div>
+					</button>
 				</div>
 			</div>
 		</div>
@@ -298,6 +313,9 @@ function toggleDirectory() {
 	text-align: center;
 	cursor: pointer;
 	padding: var(--space-2);
+	background: transparent;
+	font: inherit;
+	color: inherit;
 	border: var(--border-thin) solid transparent;
 	border-radius: var(--radius-lg);
 	transition:
@@ -314,11 +332,27 @@ function toggleDirectory() {
 	transform: translateY(-0.125rem);
 }
 
+.file-explorer-file:focus {
+	outline: none;
+}
+
+.file-explorer-file:focus-visible {
+	border-color: rgba(90, 61, 43, 0.22);
+	background: rgba(255, 249, 241, 0.8);
+	box-shadow:
+		0 0 0 0.18rem rgba(191, 233, 255, 0.5),
+		0 0.75rem 1.5rem rgba(90, 61, 43, 0.12);
+}
+
 .file-explorer-file.disabled {
 	cursor: default;
 	opacity: 0.6;
 	transform: none;
 	box-shadow: none;
+}
+
+.file-explorer-file:disabled {
+	pointer-events: none;
 }
 
 .file-explorer-file.disabled:hover {

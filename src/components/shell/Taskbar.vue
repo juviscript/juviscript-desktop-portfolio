@@ -32,14 +32,21 @@ onUnmounted(() => {
 
 <template>
 	<div class="taskbar">
-		<button class="start-button" type="button">
+		<div class="start-button" aria-hidden="true">
 			<span class="brand-dot"></span>
 			<span class="start-label">jsOS</span>
-		</button>
+		</div>
 
-		<div class="taskbar-middle">
-			<button v-for="window in windows" :key="window.id" class="taskbar-app" :class="{ minimized: window.isMinimized }" type="button" @click="() => emit('select-window', window.id)">
-				<img class="app-icon" :src="window.icon" :alt="`${window.label} icon`" />
+		<div class="taskbar-middle" role="toolbar" aria-label="Open windows">
+			<button
+				v-for="window in windows"
+				:key="window.id"
+				class="taskbar-app"
+				:class="{ minimized: window.isMinimized }"
+				type="button"
+				:aria-pressed="(!window.isMinimized).toString()"
+				@click="() => emit('select-window', window.id)">
+				<img class="app-icon" :src="window.icon" alt="" aria-hidden="true" />
 				<span class="app-label">{{ window.label }}</span>
 			</button>
 		</div>
@@ -81,18 +88,11 @@ onUnmounted(() => {
 	background: linear-gradient(135deg, var(--color-accent-red), var(--color-accent-orange));
 	border: var(--border-thin) solid rgba(90, 61, 43, 0.14);
 	border-radius: var(--radius-pill);
-	cursor: pointer;
 	font-family: var(--font-display);
 	font-size: var(--text-sm);
 	font-weight: 700;
 	color: var(--color-ink);
 	box-shadow: 0 0.75rem 1.5rem rgba(222, 107, 72, 0.28);
-	transition: transform 140ms ease, box-shadow 140ms ease;
-}
-
-.start-button:hover {
-	transform: translateY(-0.0625rem);
-	box-shadow: 0 1rem 1.75rem rgba(222, 107, 72, 0.34);
 }
 
 .brand-dot {
@@ -145,6 +145,16 @@ onUnmounted(() => {
 	background: rgba(255, 255, 255, 0.72);
 	border-color: rgba(90, 61, 43, 0.22);
 	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.1);
+}
+
+.taskbar-app:focus-visible {
+	outline: none;
+	transform: translateY(-0.0625rem);
+	background: rgba(255, 255, 255, 0.78);
+	border-color: rgba(222, 107, 72, 0.4);
+	box-shadow:
+		0 0 0 0.18rem rgba(222, 107, 72, 0.18),
+		0 0.5rem 1rem rgba(90, 61, 43, 0.12);
 }
 
 .taskbar-app.minimized {

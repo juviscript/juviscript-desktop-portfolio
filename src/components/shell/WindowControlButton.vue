@@ -43,6 +43,14 @@ const emit = defineEmits<{
 	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.12);
 }
 
+.button:focus-visible {
+	outline: none;
+	transform: translateY(-0.0625rem);
+	box-shadow:
+		0 0 0 0.16rem rgba(222, 107, 72, 0.18),
+		0 0.5rem 1rem rgba(90, 61, 43, 0.12);
+}
+
 .button--minimize {
 	background: var(--color-accent-gold);
 }

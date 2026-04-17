@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, nextTick, ref, watch } from "vue";
 import DesktopIcon from "./DesktopIcon.vue";
 import Taskbar from "./Taskbar.vue";
 import AppWindow from "./AppWindow.vue";
@@ -22,18 +23,55 @@ const {
 	openDesktopProjectBrowserWindow,
 	openDesktopProjectWindow,
 } = useWorkspaceState();
+
+const desktopElement = ref<HTMLElement | null>(null);
+
+const hasVisibleDesktopWindow = computed(() =>
+	workspaceState.desktop.openWindows.some(window => !window.isMinimized),
+);
+
+const windowsInTabOrder = computed(() =>
+	[...workspaceState.desktop.openWindows].sort((firstWindow, secondWindow) => secondWindow.zIndex - firstWindow.zIndex),
+);
+
+const activeVisibleWindowId = computed(() => windowsInTabOrder.value.find(window => !window.isMinimized)?.id ?? null);
+
+watch(activeVisibleWindowId, async nextWindowId => {
+	await nextTick();
+
+	const activeElement = document.activeElement as HTMLElement | null;
+	const activeElementIsUsable = activeElement && activeElement !== document.body && desktopElement.value?.contains(activeElement);
+
+	if (activeElementIsUsable) {
+		return;
+	}
+
+	if (nextWindowId) {
+		const activeWindowElement = desktopElement.value?.querySelector<HTMLElement>(`[data-window-id="${nextWindowId}"]`);
+		activeWindowElement?.focus({ preventScroll: true });
+		return;
+	}
+
+	const firstDesktopIcon = desktopElement.value?.querySelector<HTMLElement>(".desktop-icon");
+	firstDesktopIcon?.focus({ preventScroll: true });
+});
 </script>
 
 <template>
-	<div class="desktop">
+	<div ref="desktopElement" class="desktop">
 		<div class="icon-grid">
-			<DesktopIcon v-for="app in desktopApps" :key="app.id" :id="app.id" :label="app.label" :icon="app.icon" @open="openDesktopApp" />
+			<DesktopIcon
+				v-for="app in desktopApps"
+				:key="app.id"
+				:id="app.id"
+				:label="app.label"
+				:icon="app.icon"
+				:tab-index="hasVisibleDesktopWindow ? -1 : 0"
+				@open="openDesktopApp" />
 		</div>
 
-		<a class="icons-attribution" href="https://icons8.com" target="_blank" rel="noopener noreferrer">Icons by Icons8</a>
-
 		<AppWindow
-			v-for="app in workspaceState.desktop.openWindows"
+			v-for="app in windowsInTabOrder"
 			v-show="!app.isMinimized"
 			:key="app.id"
 			:id="app.id"
@@ -115,27 +153,5 @@ const {
 	top: 0;
 	left: 0;
 	z-index: 1;
-}
-
-.icons-attribution {
-	position: absolute;
-	right: var(--space-5);
-	bottom: 5.75rem;
-	padding: 0.4rem 0.8rem;
-	border-radius: var(--radius-pill);
-	background: rgba(255, 249, 241, 0.7);
-	border: var(--border-thin) solid rgba(90, 61, 43, 0.12);
-	box-shadow: 0 0.5rem 1rem rgba(90, 61, 43, 0.08);
-	color: var(--color-ink-soft);
-	font-size: var(--text-2xs);
-	font-weight: 600;
-	text-decoration: none;
-	backdrop-filter: blur(0.5rem);
-	z-index: 2;
-}
-
-.icons-attribution:hover {
-	color: var(--color-ink);
-	background: rgba(255, 249, 241, 0.88);
 }
 </style>

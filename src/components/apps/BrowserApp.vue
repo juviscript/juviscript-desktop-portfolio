@@ -14,28 +14,29 @@ const props = defineProps<{
 
 <template>
 	<div class="browser-window">
-		<div class="browser-navigation-bar">
-			<div class="browser-navigation-buttons">
-				<button class="browser-nav-button" type="button" aria-label="Go back">
+		<div class="browser-navigation-bar" aria-label="Browser preview controls">
+			<div class="browser-navigation-buttons" aria-hidden="true">
+				<button class="browser-nav-button" type="button" disabled tabindex="-1">
 					<ThemedIcon class="browser-nav-icon" :svg="backPageIcon" />
 				</button>
-				<button class="browser-nav-button" type="button" aria-label="Go forward">
+				<button class="browser-nav-button" type="button" disabled tabindex="-1">
 					<ThemedIcon class="browser-nav-icon" :svg="forwardPageIcon" />
 				</button>
-				<button class="browser-nav-button" type="button" aria-label="Refresh page">
+				<button class="browser-nav-button" type="button" disabled tabindex="-1">
 					<ThemedIcon class="browser-nav-icon" :svg="refreshPageIcon" />
 				</button>
-				<button class="browser-nav-button browser-nav-button--home" type="button" aria-label="Go home">
+				<button class="browser-nav-button browser-nav-button--home" type="button" disabled tabindex="-1">
 					<ThemedIcon class="browser-nav-icon" :svg="homeIcon" />
 				</button>
 			</div>
 
 			<div class="browser-navigation-address-bar">
-				<input type="text" class="browser-url-input" :value="props.url" disabled />
+				<label class="browser-url-label" for="browser-url-input">Current page URL</label>
+				<input id="browser-url-input" type="text" class="browser-url-input" :value="props.url" readonly />
 			</div>
 
-			<div class="browser-navigation-menu">
-				<button class="browser-menu-button" type="button" aria-label="Browser menu">
+			<div class="browser-navigation-menu" aria-hidden="true">
+				<button class="browser-menu-button" type="button" disabled tabindex="-1">
 					<span class="browser-menu-dots" aria-hidden="true">&#8226;&#8226;&#8226;</span>
 				</button>
 			</div>
@@ -97,8 +98,15 @@ const props = defineProps<{
 		color 140ms ease;
 }
 
-.browser-nav-button:hover,
-.browser-menu-button:hover {
+.browser-nav-button:disabled,
+.browser-menu-button:disabled {
+	cursor: default;
+	opacity: 0.58;
+	box-shadow: none;
+}
+
+.browser-nav-button:hover:not(:disabled),
+.browser-menu-button:hover:not(:disabled) {
 	transform: translateY(-0.0625rem);
 	background: var(--color-surface);
 	color: var(--color-ink);
@@ -115,6 +123,7 @@ const props = defineProps<{
 }
 
 .browser-navigation-address-bar {
+	position: relative;
 	min-width: 0;
 	padding: 0.55rem 0.75rem;
 	border-radius: var(--radius-pill);
@@ -125,6 +134,25 @@ const props = defineProps<{
 	box-shadow: inset 0 0 0 0.0625rem rgba(255, 255, 255, 0.3);
 }
 
+.browser-navigation-address-bar:focus-within {
+	border-color: rgba(222, 107, 72, 0.34);
+	box-shadow:
+		inset 0 0 0 0.0625rem rgba(255, 255, 255, 0.3),
+		0 0 0 0.18rem rgba(222, 107, 72, 0.12);
+}
+
+.browser-url-label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 .browser-url-input {
 	width: 100%;
 	padding: 0;
@@ -133,13 +161,11 @@ const props = defineProps<{
 	color: var(--color-ink);
 	font-size: var(--text-sm);
 	font-weight: 500;
-	outline: none;
 	box-shadow: none;
 }
 
-.browser-url-input:focus {
+.browser-url-input:focus-visible {
 	outline: none;
-	box-shadow: none;
 }
 
 .browser-menu-dots {

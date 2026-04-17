@@ -22,6 +22,7 @@ const emit = defineEmits<{
 const TASKBAR_HEIGHT = 88;
 const TITLE_BAR_HEIGHT = 56;
 const MIN_VISIBLE_TITLE_WIDTH = 160;
+const titleId = `window-title-${props.id}`;
 
 const windowElement = ref<HTMLElement | null>(null);
 
@@ -52,6 +53,10 @@ function centerWindow() {
 
 	x.value = Math.max((width - currentWidth.value) / 2, 0);
 	y.value = Math.max((height - TASKBAR_HEIGHT - currentHeight.value) / 2, 0);
+}
+
+function focusWindow() {
+	windowElement.value?.focus({ preventScroll: true });
 }
 
 const x = ref(0);
@@ -151,6 +156,8 @@ onMounted(() => {
 		if (!isMaximized.value) {
 			centerWindow();
 		}
+
+		focusWindow();
 	});
 });
 </script>
@@ -159,6 +166,10 @@ onMounted(() => {
 	<div
 		ref="windowElement"
 		class="window"
+		:data-window-id="props.id"
+		role="dialog"
+		:aria-labelledby="titleId"
+		tabindex="-1"
 		:class="{ maximized: isMaximized }"
 		:style="{
 			...(isMaximized
@@ -174,7 +185,7 @@ onMounted(() => {
 		@click="emit('focus', props.id)">
 		<div class="window-frame">
 			<div class="title-bar" @mousedown="grabWindow">
-				<span class="title">{{ props.title }}</span>
+				<h2 :id="titleId" class="title">{{ props.title }}</h2>
 				<div class="window-controls">
 					<WindowControlButton action="minimize" :iconSvg="minimizeWindowIcon" @windowAction="handleWindowAction" />
 					<WindowControlButton action="maximize" :iconSvg="maximizeWindowIcon" @windowAction="handleWindowAction" />
@@ -197,6 +208,13 @@ onMounted(() => {
 	background: linear-gradient(180deg, var(--color-frame-top), var(--color-frame-bottom));
 	border: var(--border-thin) solid rgba(222, 107, 72, 0.18);
 	box-shadow: var(--shadow-card-strong);
+}
+
+.window:focus-visible {
+	outline: none;
+	box-shadow:
+		0 0 0 0.24rem rgba(222, 107, 72, 0.18),
+		var(--shadow-card-strong);
 }
 
 .window.maximized {
@@ -244,6 +262,7 @@ onMounted(() => {
 	display: inline-flex;
 	align-items: center;
 	min-height: 2.1rem;
+	margin: 0;
 	font-size: var(--text-lg);
 	font-weight: 600;
 	letter-spacing: 0.01em;
