@@ -9,6 +9,8 @@ import BrowserApp from "../apps/BrowserApp.vue";
 import ProjectApp from "../apps/ProjectApp.vue";
 import AboutApp from "../apps/AboutApp.vue";
 import ContactApp from "../apps/ContactApp.vue";
+import NollieCompanion from "./NollieCompanion.vue";
+import WidgetDeck from "../widgets/WidgetDeck.vue";
 import { desktopApps } from "../../data/DesktopApps";
 import { useWorkspaceState } from "../../composables/useWorkspaceState";
 
@@ -69,6 +71,9 @@ watch(activeVisibleWindowId, async nextWindowId => {
 				:tab-index="hasVisibleDesktopWindow ? -1 : 0"
 				@open="openDesktopApp" />
 		</div>
+
+		<WidgetDeck surface="desktop" title="Widgets" description="Workspace Shelf" class="desktop-widget-deck" />
+		<NollieCompanion surface="desktop" />
 
 		<AppWindow
 			v-for="app in windowsInTabOrder"
@@ -153,5 +158,20 @@ watch(activeVisibleWindowId, async nextWindowId => {
 	top: 0;
 	left: 0;
 	z-index: 1;
+}
+
+.desktop-widget-deck {
+	position: absolute;
+	top: var(--space-5);
+	right: var(--space-5);
+	width: min(24rem, calc(100% - 16rem));
+	max-height: calc(100% - 11rem);
+	overflow: auto;
+	scrollbar-width: none;
+	z-index: 1;
+}
+
+.desktop-widget-deck::-webkit-scrollbar {
+	display: none;
 }
 </style>

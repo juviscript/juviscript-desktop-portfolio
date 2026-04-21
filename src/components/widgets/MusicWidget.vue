@@ -2,6 +2,12 @@
 import { computed, ref } from "vue";
 import WidgetCard from "./WidgetCard.vue";
 
+withDefaults(defineProps<{
+	surface?: "desktop" | "mobile";
+}>(), {
+	surface: "desktop",
+});
+
 const tracks = [
 	{ title: "Cloud Nine Compile", artist: "jsOS Radio", duration: "2:48" },
 	{ title: "Nollie Afternoon Loop", artist: "Workspace Beats", duration: "3:12" },

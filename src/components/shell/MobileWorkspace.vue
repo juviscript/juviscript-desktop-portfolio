@@ -13,6 +13,8 @@ import ContactApp from "../apps/ContactApp.vue";
 import ExplorerApp from "../apps/ExplorerApp.vue";
 import ProjectApp from "../apps/ProjectApp.vue";
 import ThemedIcon from "../shared/ThemedIcon.vue";
+import NollieCompanion from "./NollieCompanion.vue";
+import WidgetDeck from "../widgets/WidgetDeck.vue";
 import backPageIcon from "../../assets/window-icons/last-page-icon.svg?raw";
 import homeIcon from "../../assets/window-icons/home-icon.svg?raw";
 import maximizeWindowIcon from "../../assets/window-icons/maximize-window-icon.svg?raw";
@@ -330,6 +332,13 @@ function handleMobileApps() {
 					</p>
 				</div>
 			</div>
+
+			<WidgetDeck
+				surface="mobile"
+				title="Widgets"
+				description="Home Screen Extras"
+				class="mobile-widget-deck" />
+			<NollieCompanion surface="mobile" />
 
 			<div class="mobile-app-grid">
 				<button v-for="app in desktopApps" :key="app.id" class="mobile-app-button" type="button" @click="openMobileApp(app.id)">
@@ -769,6 +778,10 @@ function handleMobileApps() {
 	gap: var(--space-3) var(--space-2);
 	align-content: start;
 	padding-bottom: var(--space-3);
+}
+
+.mobile-widget-deck {
+	margin-bottom: var(--space-4);
 }
 
 .mobile-app-button {
