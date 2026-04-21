@@ -130,7 +130,7 @@ function handleMobileOpenProject(projectId: string) {
 	openMobileProject(projectId);
 }
 
-function handleMobileOpenProjectUrl(projectId: string, url: string, title: string) {
+function handleMobileOpenProjectUrl(_projectId: string, url: string, title: string) {
 	openMobileBrowserView({
 		sourceAppId: "projects",
 		title,
@@ -405,7 +405,7 @@ function handleMobileApps() {
 					:class="{ 'mobile-bottom-toolbar-button--disabled': !isNestedMobileView }"
 					type="button"
 					:disabled="!isNestedMobileView"
-					:aria-disabled="(!isNestedMobileView).toString()"
+					:aria-disabled="!isNestedMobileView"
 					aria-label="Back"
 					@click="handleMobileSubviewBack">
 					<ThemedIcon class="mobile-bottom-toolbar-icon" :svg="backPageIcon" />

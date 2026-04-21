@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://juviscript.dev/sitemap.xml

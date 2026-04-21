@@ -10,8 +10,9 @@ const tracks = [
 
 const currentTrackIndex = ref(0);
 const isPlaying = ref(true);
+const fallbackTrack = tracks[0]!;
 
-const currentTrack = computed(() => tracks[currentTrackIndex.value]);
+const currentTrack = computed(() => tracks[currentTrackIndex.value] ?? fallbackTrack);
 
 function previousTrack() {
 	currentTrackIndex.value = currentTrackIndex.value === 0 ? tracks.length - 1 : currentTrackIndex.value - 1;

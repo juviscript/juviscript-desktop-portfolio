@@ -44,7 +44,7 @@ onUnmounted(() => {
 				class="taskbar-app"
 				:class="{ minimized: window.isMinimized }"
 				type="button"
-				:aria-pressed="(!window.isMinimized).toString()"
+				:aria-pressed="!window.isMinimized"
 				@click="() => emit('select-window', window.id)">
 				<img class="app-icon" :src="window.icon" alt="" aria-hidden="true" />
 				<span class="app-label">{{ window.label }}</span>
