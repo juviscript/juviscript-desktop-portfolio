@@ -9,7 +9,6 @@ import BrowserApp from "../apps/BrowserApp.vue";
 import ProjectApp from "../apps/ProjectApp.vue";
 import AboutApp from "../apps/AboutApp.vue";
 import ContactApp from "../apps/ContactApp.vue";
-import NollieCompanion from "./NollieCompanion.vue";
 import WidgetDeck from "../widgets/WidgetDeck.vue";
 import { desktopApps } from "../../data/DesktopApps";
 import { useWorkspaceState } from "../../composables/useWorkspaceState";
@@ -73,7 +72,6 @@ watch(activeVisibleWindowId, async nextWindowId => {
 		</div>
 
 		<WidgetDeck surface="desktop" title="Widgets" description="Workspace Shelf" class="desktop-widget-deck" />
-		<NollieCompanion surface="desktop" />
 
 		<AppWindow
 			v-for="app in windowsInTabOrder"
